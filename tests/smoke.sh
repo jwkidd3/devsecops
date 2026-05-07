@@ -200,10 +200,11 @@ fi
 # ---------------------------------------------------------------------------
 section "Lab 6 — Metasploit container"
 
-note "msfconsole startup (60-120 sec — module load is slow) ..."
+note "msfconsole startup (90-180 sec — Ruby module load is slow) ..."
 # Image's entrypoint is `su-exec msf` and CMD is `./msfconsole` — when we pass
 # our own args we must include the binary path explicitly.
-if _timeout 180 docker run --rm \
+# Stderr is full of Ruby/Bundler deprecation warnings (benign); discard.
+if _timeout 300 docker run --rm \
       --network devsecops-lab \
       metasploitframework/metasploit-framework:latest \
       ./msfconsole -q -x "ping -c 1 metasploitable; exit" 2>/dev/null \
@@ -211,7 +212,7 @@ if _timeout 180 docker run --rm \
   ok "msfconsole container reaches metasploitable"
 else
   # Fallback: just check msfconsole starts at all
-  if _timeout 120 docker run --rm \
+  if _timeout 240 docker run --rm \
         metasploitframework/metasploit-framework:latest \
         ./msfconsole -q -x "version; exit" 2>/dev/null \
         | grep -qiE "framework|metasploit"; then
