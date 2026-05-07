@@ -97,6 +97,12 @@ else
         part_num=$(echo "$root_part" | sed -E 's,^.*/[a-zA-Z]+,,')
 
         if [[ -n "$root_disk" && -n "$part_num" ]]; then
+          # Force the kernel to re-read the new EBS size before resizing the partition.
+          # Without this, growpart still sees the old disk size on some AMIs.
+          echo 1 | sudo tee "/sys/class/block/${root_disk}/device/rescan" >/dev/null 2>&1 || true
+          sudo partprobe "/dev/$root_disk" >/dev/null 2>&1 || true
+          sleep 3
+
           sudo growpart "/dev/$root_disk" "$part_num" >/dev/null 2>&1 || true
           fs_type=$(findmnt -n -o FSTYPE /)
           if [[ "$fs_type" == "xfs" ]]; then
@@ -105,7 +111,23 @@ else
             sudo resize2fs "$root_part" >/dev/null 2>&1 || true
           fi
           new_gb=$(df --output=size -BG / 2>/dev/null | tail -1 | tr -dc '0-9' || echo 0)
-          ok "root volume now ${new_gb} GB"
+          if (( new_gb >= TARGET_GB - 2 )); then
+            ok "root volume now ${new_gb} GB"
+          else
+            warn "volume API resize succeeded but kernel still shows ${new_gb} GB"
+            echo
+            echo "    +-------------------------------------------------------------+"
+            echo "    | REBOOT REQUIRED                                             |"
+            echo "    | The EBS volume is now ${TARGET_GB} GB at the API level, but the    |"
+            echo "    | kernel didn't pick it up. Reboot the Cloud9 EC2 instance:   |"
+            echo "    |                                                             |"
+            echo "    |   EC2 console -> your instance -> Instance state -> Reboot  |"
+            echo "    |                                                             |"
+            echo "    | After reboot, reopen Cloud9 and re-run this script.         |"
+            echo "    +-------------------------------------------------------------+"
+            echo
+            exit 0
+          fi
         else
           warn "could not detect root device; reboot the EC2 to apply the resize"
         fi
