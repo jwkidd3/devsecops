@@ -33,7 +33,7 @@ docker run --rm -it \
   --network devsecops-lab \
   -v $HOME/environment/devsecops-work/msf:/home/msf \
   metasploitframework/metasploit-framework:latest \
-  -q
+  ./msfconsole -q
 ```
 
 The `-q` skips the banner. You'll land at:

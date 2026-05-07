@@ -201,22 +201,23 @@ fi
 section "Lab 6 — Metasploit container"
 
 note "msfconsole startup (60-120 sec — module load is slow) ..."
-# Image's entrypoint is msfconsole; pass args directly, not ./msfconsole.
+# Image's entrypoint is `su-exec msf` and CMD is `./msfconsole` — when we pass
+# our own args we must include the binary path explicitly.
 if _timeout 180 docker run --rm \
       --network devsecops-lab \
       metasploitframework/metasploit-framework:latest \
-      -q -x "ping -c 1 metasploitable; exit" 2>/dev/null \
+      ./msfconsole -q -x "ping -c 1 metasploitable; exit" 2>/dev/null \
       | grep -q "1 packets transmitted"; then
   ok "msfconsole container reaches metasploitable"
 else
   # Fallback: just check msfconsole starts at all
   if _timeout 120 docker run --rm \
         metasploitframework/metasploit-framework:latest \
-        -q -x "version; exit" 2>/dev/null \
+        ./msfconsole -q -x "version; exit" 2>/dev/null \
         | grep -qiE "framework|metasploit"; then
     ok "msfconsole starts (network reach not verified)"
   else
-    bad "msfconsole failed — try: docker run --rm metasploitframework/metasploit-framework:latest -q -x 'version; exit'"
+    bad "msfconsole failed — try: docker run --rm metasploitframework/metasploit-framework:latest ./msfconsole -q -x 'version; exit'"
   fi
 fi
 
