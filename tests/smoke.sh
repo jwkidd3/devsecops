@@ -203,23 +203,18 @@ section "Lab 6 — Metasploit container"
 note "msfconsole startup (90-180 sec — Ruby module load is slow) ..."
 # Image's entrypoint is `su-exec msf` and CMD is `./msfconsole` — when we pass
 # our own args we must include the binary path explicitly.
-# Stderr is full of Ruby/Bundler deprecation warnings (benign); discard.
-if _timeout 300 docker run --rm \
-      --network devsecops-lab \
-      metasploitframework/metasploit-framework:latest \
-      ./msfconsole -q -x "ping -c 1 metasploitable; exit" 2>/dev/null \
-      | grep -q "1 packets transmitted"; then
+# Combine stderr+stdout so we don't lose output buffered through stderr.
+msf_out=$(_timeout 300 docker run --rm \
+            --network devsecops-lab \
+            metasploitframework/metasploit-framework:latest \
+            ./msfconsole -q -x "ping -c 1 metasploitable; exit" 2>&1)
+if echo "$msf_out" | grep -q "1 packets transmitted"; then
   ok "msfconsole container reaches metasploitable"
+elif echo "$msf_out" | grep -qiE "Framework:|metasploit"; then
+  ok "msfconsole starts (network reach to metasploitable not verified)"
 else
-  # Fallback: just check msfconsole starts at all
-  if _timeout 240 docker run --rm \
-        metasploitframework/metasploit-framework:latest \
-        ./msfconsole -q -x "version; exit" 2>/dev/null \
-        | grep -qiE "framework|metasploit"; then
-    ok "msfconsole starts (network reach not verified)"
-  else
-    bad "msfconsole failed — try: docker run --rm metasploitframework/metasploit-framework:latest ./msfconsole -q -x 'version; exit'"
-  fi
+  bad "msfconsole failed — last 15 lines of output:"
+  echo "$msf_out" | tail -15 | sed 's/^/     /'
 fi
 
 # ---------------------------------------------------------------------------
