@@ -91,9 +91,19 @@ else
   bad "aws sts get-caller-identity failed — Lab 1 step 2 not complete"
 fi
 
-# Region detection (Lab 8 uses this)
-REGION=$(curl -s --max-time 3 http://169.254.169.254/latest/dynamic/instance-identity/document 2>/dev/null \
-         | jq -r .region 2>/dev/null || echo "")
+# Region detection (Lab 8 uses this) — handle IMDSv2 + fall back to IMDSv1
+REGION=""
+IMDS_TOKEN=$(curl -s --max-time 3 -X PUT "http://169.254.169.254/latest/api/token" \
+             -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
+if [[ -n "$IMDS_TOKEN" ]]; then
+  REGION=$(curl -s --max-time 3 -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" \
+           http://169.254.169.254/latest/dynamic/instance-identity/document 2>/dev/null \
+           | jq -r .region 2>/dev/null)
+fi
+if [[ -z "$REGION" || "$REGION" == "null" ]]; then
+  REGION=$(curl -s --max-time 3 http://169.254.169.254/latest/dynamic/instance-identity/document 2>/dev/null \
+           | jq -r .region 2>/dev/null)
+fi
 if [[ -n "$REGION" && "$REGION" != "null" ]]; then
   ok "EC2 region detected: $REGION"
 else
@@ -126,12 +136,18 @@ check "Juice Shop container running"              5 docker ps --filter name=juic
 check "Metasploitable container running"          5 docker ps --filter name=metasploitable-${YOU} --filter status=running --quiet
 check "devsecops-lab network exists"              5 docker network inspect devsecops-lab
 
+# Try Go template first; fall back to jq query against full inspect output
 META_IP=$(docker inspect "metasploitable-${YOU}" \
-  --format "{{ (index .NetworkSettings.Networks \"devsecops-lab\").IPAddress }}" 2>/dev/null || echo "")
+  --format "{{ (index .NetworkSettings.Networks \"devsecops-lab\").IPAddress }}" 2>/dev/null)
+if [[ -z "$META_IP" || "$META_IP" == "<no value>" ]]; then
+  META_IP=$(docker inspect "metasploitable-${YOU}" 2>/dev/null \
+            | jq -r '.[0].NetworkSettings.Networks["devsecops-lab"].IPAddress // .[0].NetworkSettings.Networks | to_entries[0].value.IPAddress // ""' 2>/dev/null)
+fi
 if [[ -n "$META_IP" ]]; then
+  ok "Metasploitable IP: $META_IP"
   check "Metasploitable port 21 (FTP) open"       10 nmap -Pn -p 21 --open "$META_IP" --max-retries 1
 else
-  bad "could not read Metasploitable IP"
+  bad "could not read Metasploitable IP — try: docker inspect metasploitable-${YOU} --format '{{json .NetworkSettings.Networks}}'"
 fi
 
 # Helper images pre-pulled
@@ -184,22 +200,22 @@ fi
 # ---------------------------------------------------------------------------
 section "Lab 6 — Metasploit container"
 
-note "msfconsole startup + reach metasploitable (~30 sec) ..."
-if _timeout 60 docker run --rm \
+note "msfconsole startup + reach metasploitable (60-120 sec — module load is slow) ..."
+if _timeout 180 docker run --rm \
       --network devsecops-lab \
       metasploitframework/metasploit-framework:latest \
       ./msfconsole -q -x "ping -c 1 metasploitable; exit" 2>/dev/null \
       | grep -q "1 packets transmitted"; then
   ok "msfconsole container reaches metasploitable"
 else
-  # Fallback: just check msfconsole starts
-  if _timeout 30 docker run --rm \
+  # Fallback: just check msfconsole starts at all
+  if _timeout 120 docker run --rm \
         metasploitframework/metasploit-framework:latest \
         ./msfconsole -q -x "version; exit" 2>/dev/null \
         | grep -q "Framework"; then
     ok "msfconsole starts (network reach not verified)"
   else
-    bad "msfconsole container failed to start"
+    bad "msfconsole container failed to start — check: docker images | grep metasploit"
   fi
 fi
 
@@ -277,13 +293,24 @@ aws logs delete-log-group --log-group-name "$LG" >/dev/null 2>&1 \
 section "Lab 9 — Jenkins pre-stage"
 
 check "Jenkins container running"              5 docker ps --filter name=ds-jenkins --filter status=running --quiet
-check "Jenkins web UI on :8081"               10 curl -sf -o /dev/null http://localhost:8081/login
+
+# Wait up to 60s for Jenkins to respond — first boot is slow
+JENKINS_OK=0
+for _ in 1 2 3 4 5 6; do
+  curl -sf -o /dev/null --max-time 5 http://localhost:8081/login && { JENKINS_OK=1; break; }
+  sleep 10
+done
+if (( JENKINS_OK )); then
+  ok "Jenkins web UI on :8081"
+else
+  bad "Jenkins web UI on :8081 — check: docker logs ds-jenkins | tail -30"
+fi
 
 # Sample repo mounted inside Jenkins
 if docker exec ds-jenkins ls /var/sample-repo/Jenkinsfile >/dev/null 2>&1; then
   ok "sample repo mounted at /var/sample-repo"
 else
-  bad "sample repo not mounted — re-run Lab 1 setup script"
+  bad "sample repo not mounted — try: cd ~/environment/devsecops-work/lab9/jenkins && docker compose down && bash ~/environment/devsecops/labs/lab-01/scripts/setup-cloud9.sh ${YOU}"
 fi
 
 # Jenkins admin password file readable

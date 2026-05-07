@@ -42,8 +42,11 @@
 In the Cloud9 terminal:
 
 ```bash
-# Use the region your Cloud9 is in
-export AWS_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
+# Use the region your Cloud9 is in (handle both IMDSv1 and IMDSv2)
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+        -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+export AWS_REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+                    http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
 
 # Namespace your resources by your name to avoid collisions in the shared account
 YOU="<your-name>"     # same suffix you used in Lab 1
