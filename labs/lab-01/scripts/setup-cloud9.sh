@@ -55,7 +55,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-log "2/7  Docker"
+log "2/7  Docker + compose plugin"
 # ---------------------------------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
   warn "docker not found — Cloud9 should have it preinstalled"
@@ -66,6 +66,34 @@ else
     ok "docker daemon reachable"
   else
     warn "docker daemon not reachable — open a fresh terminal or use sudo"
+  fi
+
+  # docker compose v2 plugin — Cloud9 doesn't ship with it
+  if docker compose version >/dev/null 2>&1; then
+    skip "docker compose plugin already installed"
+  else
+    echo "    installing docker compose v2 plugin"
+    # Try the package manager first (cleaner)
+    installed=0
+    if command -v dnf >/dev/null 2>&1; then
+      sudo dnf install -y -q docker-compose-plugin >/dev/null 2>&1 \
+        && docker compose version >/dev/null 2>&1 && installed=1
+    fi
+    # Fall back to direct plugin binary download
+    if (( installed == 0 )); then
+      sudo mkdir -p /usr/local/lib/docker/cli-plugins
+      arch=$(uname -m)
+      url="https://github.com/docker/compose/releases/latest/download/docker-compose-linux-${arch}"
+      if sudo curl -fsSL "$url" -o /usr/local/lib/docker/cli-plugins/docker-compose 2>/dev/null \
+         && sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose; then
+        installed=1
+      fi
+    fi
+    if docker compose version >/dev/null 2>&1; then
+      ok "docker compose installed"
+    else
+      warn "could not install docker compose — Lab 9 will fail until installed manually"
+    fi
   fi
 fi
 
