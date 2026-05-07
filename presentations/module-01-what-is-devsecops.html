@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What is DevSecOps? | DevSecOps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; overflow: auto; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#128737;&#65039; What is DevSecOps?</h1>
+                <h2>History, business impact, and the DevSecOps lifecycle</h2>
+                <h3>DevSecOps &mdash; Module 1 of 9</h3>
+                <div class="module-progress">
+                    <div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+                </div>
+                <aside class="notes">Welcome the room. Frame DevSecOps as culture-first, tools-second. The two-day plan: foundations and threat modeling on day 1, testing/monitoring/automation on day 2.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Define DevSecOps in a single sentence</li>
+                    <li class="fragment fade-up">Trace the journey from waterfall &rarr; DevOps &rarr; DevSecOps</li>
+                    <li class="fragment fade-up">Quantify the business impact of shifting security left</li>
+                    <li class="fragment fade-up">Walk the DevSecOps lifecycle and where security checks belong</li>
+                    <li class="fragment fade-up">Recognise common failure modes that derail DevSecOps programs</li>
+                </ul>
+                <aside class="notes">Set the agenda for the next ~75 minutes. Tell learners that lab 1 follows this module — sandbox setup.</aside>
+            </section>
+
+            <!-- Definition -->
+            <section>
+                <h2>&#128221; A working definition</h2>
+                <div class="concept-box">
+                    <h3>DevSecOps is&hellip;</h3>
+                    <p>The practice of embedding security responsibility, automation, and feedback into <strong>every</strong> stage of the software delivery lifecycle &mdash; so that secure software is the default outcome of the pipeline, not a final gate.</p>
+                </div>
+                <div class="key-point">
+                    <strong>Three words:</strong> Culture &middot; Automation &middot; Feedback. Drop any of the three and you're back to "Sec" being a bottleneck.
+                </div>
+                <aside class="notes">Push back on the common misread that DevSecOps is "DevOps + a security tool." Tools without culture or feedback fail the same way DevOps fails when teams don't change ownership.</aside>
+            </section>
+
+            <!-- History -->
+            <section>
+                <h2>&#128218; A short history</h2>
+                <table>
+                    <tr><th>Era</th><th>Pattern</th><th>Security posture</th></tr>
+                    <tr><td>1990s &mdash; Waterfall</td><td>Big design, big release</td><td>Pen test at end; fix or ship anyway</td></tr>
+                    <tr><td>2001 &mdash; Agile manifesto</td><td>Iterative, working software</td><td>Security still a phase, just shorter ones</td></tr>
+                    <tr><td>2009 &mdash; DevOps emerges</td><td>Dev + Ops, CI/CD, infra as code</td><td>Velocity goes up; security falls behind</td></tr>
+                    <tr><td>2012&ndash;2016 &mdash; "Rugged DevOps"</td><td>Resilience built into software</td><td>Security as a property, not a phase</td></tr>
+                    <tr><td>2016+ &mdash; DevSecOps</td><td>Sec embedded in pipeline</td><td>Shift-left, shift-right, continuous</td></tr>
+                </table>
+                <aside class="notes">Highlight that DevSecOps didn't replace DevOps — it answered DevOps's accidental side-effect of leaving security behind.</aside>
+            </section>
+
+            <!-- Why now -->
+            <section>
+                <h2>&#9888;&#65039; Why now? The business case</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Cost of late fixes</h4>
+                        <ul>
+                            <li>Fix in design: <strong>~1x</strong></li>
+                            <li>Fix in build: ~10x</li>
+                            <li>Fix in test: ~100x</li>
+                            <li>Fix in production: <strong>~1000x</strong></li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>External pressure</h4>
+                        <ul>
+                            <li>Regulators (GDPR, HIPAA, PCI, SOC 2)</li>
+                            <li>Customer security questionnaires</li>
+                            <li>Cyber-insurance requirements</li>
+                            <li>Supply-chain attacks (SolarWinds, Log4Shell)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box warning">
+                    <strong>The line that lands:</strong> "We can't fix our way out of a security backlog at deployment speed."
+                </div>
+                <aside class="notes">Use the cost ratio to justify shift-left investment. Numbers come from NIST and IBM studies — orders of magnitude, not exact figures.</aside>
+            </section>
+
+            <!-- Goals -->
+            <section>
+                <h2>&#127919; Goals of a DevSecOps program</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Shared ownership</strong> &mdash; every engineer owns the security of code they ship</li>
+                    <li class="fragment fade-up"><strong>Fast feedback</strong> &mdash; vulnerabilities surface in minutes, not weeks</li>
+                    <li class="fragment fade-up"><strong>Automation by default</strong> &mdash; humans review findings, machines find them</li>
+                    <li class="fragment fade-up"><strong>Continuous compliance</strong> &mdash; evidence is a by-product of the pipeline</li>
+                    <li class="fragment fade-up"><strong>Reduced blast radius</strong> &mdash; assume breach; contain it</li>
+                </ul>
+                <aside class="notes">Each goal is observable. Ask the room which their org most lacks today — it's usually shared ownership.</aside>
+            </section>
+
+            <!-- Lifecycle -->
+            <section>
+                <h2>&#128260; The DevSecOps lifecycle</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>Plan &amp; code</h4>
+                        <ul>
+                            <li>Threat modelling</li>
+                            <li>Secure-coding standards</li>
+                            <li>IDE security plugins</li>
+                            <li>Pre-commit secret scans</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Build &amp; test</h4>
+                        <ul>
+                            <li>SAST (static)</li>
+                            <li>SCA (dependencies)</li>
+                            <li>IaC scanning</li>
+                            <li>Container image scan</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Release &amp; operate</h4>
+                        <ul>
+                            <li>DAST (dynamic)</li>
+                            <li>Signed artefacts</li>
+                            <li>Runtime monitoring</li>
+                            <li>Incident playbooks</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box success"><strong>Rule of thumb:</strong> if a control only runs at one stage, it's an audit. If it runs at every stage, it's DevSecOps.</div>
+                <aside class="notes">We'll spend day 2 on tools that fill these stages — ZAP for DAST, Metasploit for offensive validation, Azure Monitor for runtime, Jenkins for orchestration.</aside>
+            </section>
+
+            <!-- Shift left and right -->
+            <section>
+                <h2>&#11013;&#65039; Shift left &mdash; and right</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Shift left</h4>
+                        <p>Move security earlier. Cheaper, faster, and developers see findings in tools they already use.</p>
+                        <ul>
+                            <li>Threat models in design</li>
+                            <li>Secrets blocked at commit</li>
+                            <li>SAST in PR</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Shift right</h4>
+                        <p>You can't catch every issue at build time. Detection and response in production close the loop.</p>
+                        <ul>
+                            <li>Runtime telemetry</li>
+                            <li>WAF / RASP</li>
+                            <li>Chaos &amp; red-team exercises</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Bidirectional — either alone gives you a false sense of safety.</aside>
+            </section>
+
+            <!-- Failure modes -->
+            <section>
+                <h2>&#128293; Failure modes</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Tool-first thinking</strong> &mdash; buying ten scanners before defining who owns findings</li>
+                    <li class="fragment fade-up"><strong>The DevSecOps team</strong> &mdash; centralising security undoes the shared-ownership goal</li>
+                    <li class="fragment fade-up"><strong>Alert fatigue</strong> &mdash; high false-positive rates train developers to ignore reports</li>
+                    <li class="fragment fade-up"><strong>Blocking gates without budget</strong> &mdash; failing the build with no time to fix breeds bypasses</li>
+                    <li class="fragment fade-up"><strong>Compliance theatre</strong> &mdash; ticking boxes for an auditor while real risk goes unmanaged</li>
+                </ul>
+                <div class="highlight-box danger"><strong>Watch out:</strong> a "DevSecOps" rebrand of the security team is the most common anti-pattern.</div>
+                <aside class="notes">Ask the room: which of these have they seen? It's a great icebreaker for the next module.</aside>
+            </section>
+
+            <!-- Roles -->
+            <section>
+                <h2>&#129489;&#8205;&#128187; Who does what?</h2>
+                <table>
+                    <tr><th>Role</th><th>Owns</th><th>Tools they touch</th></tr>
+                    <tr><td>Developer</td><td>Secure code, fixing findings</td><td>IDE, SAST, SCA, secret scan</td></tr>
+                    <tr><td>Platform / Ops</td><td>Pipeline, IaC, runtime config</td><td>IaC scan, image scan, secrets manager</td></tr>
+                    <tr><td>Security engineer</td><td>Standards, threat models, response</td><td>Threat-model tools, SIEM, DAST</td></tr>
+                    <tr><td>Product</td><td>Risk acceptance, prioritisation</td><td>Risk register, backlog</td></tr>
+                </table>
+                <aside class="notes">Highlight that no single role owns "all of security" — that's the whole point.</aside>
+            </section>
+
+            <!-- Maturity -->
+            <section>
+                <h2>&#128202; A simple maturity model</h2>
+                <table>
+                    <tr><th>Level</th><th>Indicator</th></tr>
+                    <tr><td>0 &mdash; Reactive</td><td>Pen test once a year; security is a meeting</td></tr>
+                    <tr><td>1 &mdash; Aware</td><td>SAST in CI but no fix SLAs</td></tr>
+                    <tr><td>2 &mdash; Embedded</td><td>Threat models per service; PR-level findings; metrics tracked</td></tr>
+                    <tr><td>3 &mdash; Automated</td><td>Policy-as-code, signed artefacts, blocking gates with paths-to-green</td></tr>
+                    <tr><td>4 &mdash; Adaptive</td><td>Continuous attack surface management; auto-remediation for known classes</td></tr>
+                </table>
+                <aside class="notes">Most orgs sit at level 1 or 2. Use this slide as a self-assessment prompt.</aside>
+            </section>
+
+            <!-- Module recap -->
+            <section>
+                <h2>&#9989; Module recap</h2>
+                <div class="key-point">
+                    <strong>Definition:</strong> security embedded in every stage of delivery, by every role, with automation closing the feedback loop.
+                </div>
+                <div class="key-point">
+                    <strong>Why:</strong> late fixes cost orders of magnitude more &mdash; and customers, regulators, and insurers demand it.
+                </div>
+                <div class="key-point">
+                    <strong>How it fails:</strong> tool-first thinking, a centralised "DevSecOps team," alert fatigue, theatre.
+                </div>
+                <aside class="notes">Hand off into the lab. The sandbox we set up here is the basis for every later lab.</aside>
+            </section>
+
+            <!-- Lab 1 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 1: Sandbox setup</h2>
+                <h3>Stand up the AWS Cloud9 environment we'll use for every lab</h3>
+                <ul>
+                    <li>Create a personal Cloud9 environment (<code>devsecops-lab-&lt;your-name&gt;</code>) in the shared training account</li>
+                    <li>Disable Cloud9 managed credentials and attach the lab IAM role</li>
+                    <li>Run the setup script &mdash; installs <code>nmap</code> / <code>jq</code>, pulls images, starts targets</li>
+                    <li>Targets: <strong>OWASP Juice Shop</strong> and <strong>Metasploitable 2</strong> on a private Docker network on your Cloud9 EC2</li>
+                    <li>Verify reachability and save your environment notes</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~30 minutes &middot; <strong>Pair:</strong> No
+                </div>
+                <aside class="notes">Each learner has their own Cloud9 instance — targets are per-learner, isolated to that EC2's Docker network. Pre-flight: confirm IAM role exists and account has Cloud9 quota.</aside>
+            </section>
+
+            <!-- Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; discussion</h2>
+                <p>Where does your team sit on the maturity model?</p>
+                <aside class="notes">Use this slide while learners finish the lab. Floor questions only — defer "how do I implement X" to the relevant later module.</aside>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

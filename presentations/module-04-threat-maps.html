@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Maps & Attack Surface | DevSecOps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; overflow: auto; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#128506;&#65039; Threat Maps &amp; Attack Surface</h1>
+                <h2>From whiteboard sketch to actionable backlog</h2>
+                <h3>DevSecOps &mdash; Module 4 of 9</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+                </div>
+                <aside class="notes">Threat modelling is the highest-leverage security activity per minute spent. Lab 3 is the practical anchor.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Define attack surface &amp; trust boundary in concrete terms</li>
+                    <li class="fragment fade-up">Draw a Data-Flow Diagram (DFD) for a realistic system</li>
+                    <li class="fragment fade-up">Apply STRIDE to enumerate threats per element</li>
+                    <li class="fragment fade-up">Use attack trees to reason about adversary goals</li>
+                    <li class="fragment fade-up">Convert findings into prioritised, actionable backlog items</li>
+                </ul>
+                <aside class="notes">By the end, learners should run a 30-minute threat-model session for a service their team owns.</aside>
+            </section>
+
+            <!-- Why threat model -->
+            <section>
+                <h2>&#129504; Why threat model?</h2>
+                <ul>
+                    <li class="fragment fade-up">Surfaces design-time bugs that <em>no</em> scanner can find</li>
+                    <li class="fragment fade-up">Forces explicit articulation of trust boundaries</li>
+                    <li class="fragment fade-up">Generates a backlog of mitigations &mdash; not a list of CVEs</li>
+                    <li class="fragment fade-up">Cheap: a whiteboard, an hour, three people</li>
+                </ul>
+                <div class="highlight-box success"><strong>The four questions</strong> (Adam Shostack):
+                    <ol>
+                        <li>What are we building?</li>
+                        <li>What can go wrong?</li>
+                        <li>What are we going to do about it?</li>
+                        <li>Did we do a good job?</li>
+                    </ol>
+                </div>
+                <aside class="notes">Shostack's four-question frame is the simplest possible meeting agenda. If a team only adopts one practice from the day, it should be this.</aside>
+            </section>
+
+            <!-- Vocabulary -->
+            <section>
+                <h2>&#128221; Vocabulary, kept simple</h2>
+                <table>
+                    <tr><th>Term</th><th>Plain meaning</th></tr>
+                    <tr><td>Asset</td><td>Anything you'd be sad to lose &mdash; data, money, reputation</td></tr>
+                    <tr><td>Threat</td><td>A bad outcome (e.g. "user data leaked")</td></tr>
+                    <tr><td>Vulnerability</td><td>A weakness that lets the threat happen</td></tr>
+                    <tr><td>Attack vector</td><td>The path / mechanism the attacker uses</td></tr>
+                    <tr><td>Trust boundary</td><td>Where data crosses between principals with different trust levels</td></tr>
+                    <tr><td>Attack surface</td><td>Sum of every place input crosses a trust boundary</td></tr>
+                </table>
+                <aside class="notes">Keep this slide up while drawing the example DFD a few slides later — learners will refer back.</aside>
+            </section>
+
+            <!-- DFD -->
+            <section>
+                <h2>&#128202; Data-flow diagrams (DFDs)</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Five symbols</h4>
+                        <ul>
+                            <li><strong>External entity</strong> &mdash; rectangle</li>
+                            <li><strong>Process</strong> &mdash; circle</li>
+                            <li><strong>Data store</strong> &mdash; two parallel lines</li>
+                            <li><strong>Data flow</strong> &mdash; arrow</li>
+                            <li><strong>Trust boundary</strong> &mdash; dashed line</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Drawing rule</h4>
+                        <p>Every <em>arrow that crosses a dashed line</em> is a place to ask "what could go wrong?"</p>
+                        <p>That's it. The whole point.</p>
+                    </div>
+                </div>
+                <div class="highlight-box"><strong>Tools:</strong> whiteboard, draw.io, OWASP Threat Dragon, Microsoft Threat Modeling Tool. Pick whichever your team will actually use.</div>
+                <aside class="notes">Whiteboard wins for first sessions. Tooling matters more for ongoing maintenance.</aside>
+            </section>
+
+            <!-- DFD example -->
+            <section>
+                <h2>&#127919; Worked example &mdash; e-commerce checkout</h2>
+                <div class="concept-box">
+                    <h3>System</h3>
+                    <p>Browser &rarr; CDN &rarr; web app &rarr; orders DB &middot; payments service &rarr; Stripe API</p>
+                </div>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Trust boundaries</h4>
+                        <ul>
+                            <li>Internet &rarr; CDN</li>
+                            <li>CDN &rarr; web app</li>
+                            <li>Web app &rarr; payments service</li>
+                            <li>Payments service &rarr; Stripe</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Crossing flows to question</h4>
+                        <ul>
+                            <li>User auth credentials</li>
+                            <li>Cart contents (price tampering?)</li>
+                            <li>Internal RPC tokens</li>
+                            <li>Payment tokens</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">Walk this example aloud. Show each crossing flow as a "what could go wrong?" prompt.</aside>
+            </section>
+
+            <!-- STRIDE -->
+            <section>
+                <h2>&#128737;&#65039; STRIDE &mdash; six categories of "what could go wrong"</h2>
+                <table>
+                    <tr><th>Letter</th><th>Threat</th><th>Property it violates</th></tr>
+                    <tr><td>S</td><td>Spoofing</td><td>Authentication</td></tr>
+                    <tr><td>T</td><td>Tampering</td><td>Integrity</td></tr>
+                    <tr><td>R</td><td>Repudiation</td><td>Non-repudiation</td></tr>
+                    <tr><td>I</td><td>Information disclosure</td><td>Confidentiality</td></tr>
+                    <tr><td>D</td><td>Denial of service</td><td>Availability</td></tr>
+                    <tr><td>E</td><td>Elevation of privilege</td><td>Authorisation</td></tr>
+                </table>
+                <div class="highlight-box"><strong>How to apply:</strong> for each element of the DFD, ask each STRIDE letter in turn. Capture only the threats that <em>actually apply</em>.</div>
+                <aside class="notes">STRIDE's purpose is to be a comprehension aid. Don't enumerate threats that have nothing to do with the element.</aside>
+            </section>
+
+            <!-- STRIDE per element -->
+            <section>
+                <h2>&#128221; STRIDE-per-element cheat sheet</h2>
+                <table>
+                    <tr><th>Element</th><th>S</th><th>T</th><th>R</th><th>I</th><th>D</th><th>E</th></tr>
+                    <tr><td>External entity</td><td>&#10004;</td><td></td><td>&#10004;</td><td></td><td></td><td></td></tr>
+                    <tr><td>Process</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+                    <tr><td>Data store</td><td></td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td></td></tr>
+                    <tr><td>Data flow</td><td></td><td>&#10004;</td><td></td><td>&#10004;</td><td>&#10004;</td><td></td></tr>
+                </table>
+                <div class="highlight-box success"><strong>Trick:</strong> processes get all six letters &mdash; that's where the most threats live.</div>
+                <aside class="notes">Hand out this cheat sheet for the lab. Saves a lot of "does data flow have spoofing?" debate.</aside>
+            </section>
+
+            <!-- Attack trees -->
+            <section>
+                <h2>&#127794; Attack trees</h2>
+                <div class="concept-box">
+                    <h3>Top-down complement to STRIDE</h3>
+                    <p><strong>Goal at root</strong> ("attacker reads admin email"). Branches are sub-goals; leaves are concrete steps.</p>
+                </div>
+                <pre><code>Read admin email
+&#9500; Phish admin
+&#9474; &#9500; Send credential-harvest link
+&#9474; &#9492; Send malicious attachment
+&#9500; Steal session token
+&#9474; &#9500; XSS
+&#9474; &#9492; Steal browser storage
+&#9492; Compromise mailbox infra
+  &#9500; Take over Entra ID account
+  &#9492; Abuse mail-forwarding rule</code></pre>
+                <div class="highlight-box"><strong>Use STRIDE to find <em>threats</em>; use attack trees to plan <em>mitigations</em>.</strong> They complement, they don't compete.</div>
+                <aside class="notes">Schneier-style attack trees. Useful for prioritisation — kill an entire branch with one mitigation.</aside>
+            </section>
+
+            <!-- Prioritisation -->
+            <section>
+                <h2>&#128202; Prioritising threats</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>DREAD (legacy)</h4>
+                        <p>Damage, Reproducibility, Exploitability, Affected users, Discoverability. Subjective &mdash; use sparingly.</p>
+                    </div>
+                    <div class="card">
+                        <h4>CVSS</h4>
+                        <p>Standard score for known vulns. Doesn't fit threats well, but good once a threat becomes a CVE.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Risk = likelihood &times; impact</h4>
+                        <p>Two-axis qualitative grid. Easy to defend in a meeting. Often enough.</p>
+                    </div>
+                </div>
+                <div class="highlight-box warning"><strong>Don't get stuck on the framework</strong> &mdash; pick one and ship the backlog.</div>
+                <aside class="notes">Many teams stall in the prioritisation phase. The cure is a deadline, not a better framework.</aside>
+            </section>
+
+            <!-- Mitigations -->
+            <section>
+                <h2>&#128737;&#65039; From threats to mitigations</h2>
+                <table>
+                    <tr><th>STRIDE</th><th>Default mitigation classes</th></tr>
+                    <tr><td>Spoofing</td><td>Authentication, MFA, mTLS, signed tokens</td></tr>
+                    <tr><td>Tampering</td><td>Hashes, signatures, integrity checks, ACLs</td></tr>
+                    <tr><td>Repudiation</td><td>Audit logs, signed events, secure timestamping</td></tr>
+                    <tr><td>Information disclosure</td><td>Encryption (at-rest &amp; in-transit), least-privilege reads</td></tr>
+                    <tr><td>Denial of service</td><td>Rate limits, quotas, autoscaling, circuit breakers</td></tr>
+                    <tr><td>Elevation of privilege</td><td>Authorisation checks, sandboxing, isolation</td></tr>
+                </table>
+                <aside class="notes">A starting palette, not a recipe. Real mitigations always need domain context.</aside>
+            </section>
+
+            <!-- Module recap -->
+            <section>
+                <h2>&#9989; Module recap</h2>
+                <div class="key-point"><strong>Four questions</strong> &mdash; what are we building, what can go wrong, what will we do, did we do a good job?</div>
+                <div class="key-point"><strong>DFD + STRIDE</strong> for the broad sweep; <strong>attack trees</strong> for the deep dives.</div>
+                <div class="key-point"><strong>Stop modelling, start mitigating</strong> &mdash; output is a backlog, not a document.</div>
+                <aside class="notes">Hand off into lab 3 — pairs will draw and STRIDE a sample architecture.</aside>
+            </section>
+
+            <!-- Lab 3 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 3: Build an attack map</h2>
+                <h3>Threat-model a sample three-tier app on Azure</h3>
+                <ul>
+                    <li>Read the architecture brief in the lab folder</li>
+                    <li>Sketch the DFD (whiteboard, draw.io, or Threat Dragon)</li>
+                    <li>Apply STRIDE-per-element &mdash; capture at least one threat per element</li>
+                    <li>Convert the top three threats into mitigation backlog items</li>
+                    <li>Walk your map for one other pair &mdash; pen-test their assumptions</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~45 minutes &middot; <strong>Pair:</strong> Yes
+                </div>
+                <aside class="notes">Pairs work well here. Encourage debate during the cross-pair walk-through.</aside>
+            </section>
+
+            <!-- Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; discussion</h2>
+                <p>What surprised you most while threat-modelling?</p>
+                <aside class="notes">Common answer: "how many trust boundaries we had no name for." That's the value.</aside>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

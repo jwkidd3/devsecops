@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thinking Like a Hacker | DevSecOps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; overflow: auto; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#129399; Thinking Like a Hacker</h1>
+                <h2>Adopting an attacker's mental model &mdash; legally</h2>
+                <h3>DevSecOps &mdash; Module 2 of 9</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+                </div>
+                <aside class="notes">Frame this as a perspective shift, not a how-to. Defenders that don't know how attackers think build the wrong defences.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Distinguish black-, grey-, and white-hat hackers</li>
+                    <li class="fragment fade-up">Walk the kill chain &mdash; the stages of an attack</li>
+                    <li class="fragment fade-up">Apply the attacker's "what could I do here?" lens to a familiar app</li>
+                    <li class="fragment fade-up">Use bug bounties and responsible disclosure ethically</li>
+                    <li class="fragment fade-up">Recognise the legal lines you must not cross</li>
+                </ul>
+                <aside class="notes">Reinforce: "thinking like" is the operative phrase. We're not training penetration testers in two days; we're training developers who can spot what an attacker would.</aside>
+            </section>
+
+            <!-- Hat colours -->
+            <section>
+                <h2>&#127913; Hats: the vocabulary</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>Black hat</h4>
+                        <p>Acts without authorisation, for personal/criminal/political gain.</p>
+                        <ul><li>Illegal</li><li>Adversary you defend against</li></ul>
+                    </div>
+                    <div class="card">
+                        <h4>Grey hat</h4>
+                        <p>Acts without explicit permission but with non-malicious intent.</p>
+                        <ul><li>Legally risky</li><li>Often well-intended</li></ul>
+                    </div>
+                    <div class="card">
+                        <h4>White hat</h4>
+                        <p>Operates under written authorisation; reports findings.</p>
+                        <ul><li>Pen testers</li><li>Bug-bounty hunters</li><li>Red teams</li></ul>
+                    </div>
+                </div>
+                <div class="highlight-box danger"><strong>The line:</strong> the action is the same; the authorisation makes it legal or not.</div>
+                <aside class="notes">Make this very explicit. Even on systems learners "own" — corporate laptops, work apps — they may not have authorisation to test.</aside>
+            </section>
+
+            <!-- Become a white hat -->
+            <section>
+                <h2>&#129351; Becoming a white hat</h2>
+                <ul>
+                    <li class="fragment fade-up">Get a written, signed scope &mdash; <em>always</em></li>
+                    <li class="fragment fade-up">Practice on intentionally vulnerable apps: Juice Shop, DVWA, HackTheBox, TryHackMe, Metasploitable</li>
+                    <li class="fragment fade-up">Participate in bug bounty programs (HackerOne, Bugcrowd, Intigriti) within program scope</li>
+                    <li class="fragment fade-up">Build the foundations: networking, web protocols, OS internals, cryptography, scripting</li>
+                    <li class="fragment fade-up">Study certifications as roadmaps: CEH (intro), OSCP (offensive practitioner), GIAC GPEN, OSWE</li>
+                </ul>
+                <div class="highlight-box success"><strong>This course's path:</strong> we'll use Juice Shop and Metasploitable. Both are free and intended to be attacked.</div>
+                <aside class="notes">Plug bug-bounty programs as the legal way to "do real attacks for real targets." Emphasise scope obsession.</aside>
+            </section>
+
+            <!-- The mindset -->
+            <section>
+                <h2>&#129504; The attacker's mental model</h2>
+                <div class="concept-box">
+                    <h3>Three questions an attacker is always asking</h3>
+                    <ul>
+                        <li><strong>What does this system trust?</strong> &mdash; users, certificates, headers, networks, environment vars</li>
+                        <li><strong>What does this system assume?</strong> &mdash; input shape, ordering, encoding, identity</li>
+                        <li><strong>What is at the boundary?</strong> &mdash; auth, parsers, deserialisers, subprocess, SQL</li>
+                    </ul>
+                </div>
+                <div class="key-point">
+                    <strong>Developers ask "how do I make this work?"</strong> Attackers ask "what does this system do <em>besides</em> what's intended?"
+                </div>
+                <aside class="notes">Drill this in: every assumption is a potential vulnerability. Walk them through "what if I send a 10-MB request body" or "what if my filename contains a slash?"</aside>
+            </section>
+
+            <!-- Kill chain -->
+            <section>
+                <h2>&#127919; The cyber kill chain</h2>
+                <table>
+                    <tr><th>Stage</th><th>Attacker activity</th><th>Defender focus</th></tr>
+                    <tr><td>1. Reconnaissance</td><td>Map targets, gather info (OSINT, scans)</td><td>Reduce footprint, monitor scans</td></tr>
+                    <tr><td>2. Weaponisation</td><td>Build exploit / payload</td><td>Detect known tooling artefacts</td></tr>
+                    <tr><td>3. Delivery</td><td>Phishing, web request, supply chain</td><td>Email filters, WAF, dependency control</td></tr>
+                    <tr><td>4. Exploitation</td><td>Trigger the vulnerability</td><td>Patching, hardening, EDR</td></tr>
+                    <tr><td>5. Installation</td><td>Persist (backdoor, scheduled task)</td><td>Integrity monitoring, allow-listing</td></tr>
+                    <tr><td>6. Command &amp; control</td><td>Beacon to attacker</td><td>Egress filtering, DNS analytics</td></tr>
+                    <tr><td>7. Actions on objectives</td><td>Exfiltrate, ransom, destroy</td><td>DLP, anomaly detection, backups</td></tr>
+                </table>
+                <aside class="notes">Lockheed Martin model — slightly dated but still the cleanest narrative. Mention MITRE ATT&amp;CK as the modern catalogue.</aside>
+            </section>
+
+            <!-- Recon kinds -->
+            <section>
+                <h2>&#128269; Reconnaissance &mdash; passive vs active</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Passive recon</h4>
+                        <p>No packets to the target. Hard to detect.</p>
+                        <ul>
+                            <li>WHOIS, DNS, certificate transparency</li>
+                            <li>LinkedIn, GitHub, leaked credentials (HIBP)</li>
+                            <li>Shodan, Censys</li>
+                            <li>Job postings (tech stack giveaways)</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Active recon</h4>
+                        <p>Packets <em>do</em> hit the target. Detectable.</p>
+                        <ul>
+                            <li>Port scans (<code>nmap</code>)</li>
+                            <li>Banner grabbing</li>
+                            <li>Directory brute-forcing</li>
+                            <li>Spider / crawler</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box warning"><strong>Authorisation note:</strong> active recon requires the same written permission as exploitation. Port scanning a system without permission is illegal in most jurisdictions.</div>
+                <aside class="notes">Ask: how much could you learn about your own employer with five minutes of passive recon? Often unsettlingly a lot.</aside>
+            </section>
+
+            <!-- MITRE ATT&CK -->
+            <section>
+                <h2>&#127918; MITRE ATT&amp;CK</h2>
+                <div class="concept-box">
+                    <h3>A living catalogue of attacker techniques</h3>
+                    <p>14 tactics (the "why"), 200+ techniques (the "how"), thousands of observed real-world examples.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Tactics:</strong> Initial Access, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Lateral Movement, Collection, C2, Exfiltration, Impact&hellip;</li>
+                    <li class="fragment fade-up">Use it to drive detection coverage gap analysis</li>
+                    <li class="fragment fade-up">Threat-intelligence reports map to ATT&amp;CK IDs (e.g. T1566 phishing)</li>
+                </ul>
+                <div class="highlight-box"><strong>Reference:</strong> attack.mitre.org &mdash; bookmark this. We'll come back to it in the threat-modelling module.</div>
+                <aside class="notes">ATT&amp;CK is the connective tissue between "thinking like a hacker" and operational defence. Don't go deep here — flag it.</aside>
+            </section>
+
+            <!-- Bug bounties -->
+            <section>
+                <h2>&#128027; Bug bounties &amp; responsible disclosure</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Bug-bounty platforms</h4>
+                        <ul>
+                            <li>HackerOne, Bugcrowd, Intigriti, YesWeHack</li>
+                            <li>Each program has a written scope &amp; rules</li>
+                            <li>Rewards: from CVE credit to $$$$</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Responsible disclosure</h4>
+                        <ul>
+                            <li>Report to the vendor; give them time to fix</li>
+                            <li>Coordinate with CERT/CC if vendor is unresponsive</li>
+                            <li>Public disclosure only after patch + reasonable window (90 days is typical)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box success"><strong>Run a vulnerability disclosure policy</strong> on the apps <em>your</em> team owns &mdash; even without a bounty. Researchers will find issues; you decide whether they have a safe path to tell you.</div>
+                <aside class="notes">If the org doesn't have a VDP, recommend security.txt as a 30-minute first step.</aside>
+            </section>
+
+            <!-- Legal -->
+            <section>
+                <h2>&#9878;&#65039; The legal lines</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>US:</strong> Computer Fraud and Abuse Act (CFAA) &mdash; "exceeding authorised access" is a crime</li>
+                    <li class="fragment fade-up"><strong>UK:</strong> Computer Misuse Act 1990</li>
+                    <li class="fragment fade-up"><strong>EU member states:</strong> NIS2, plus national laws (e.g. StGB &sect;202 in Germany)</li>
+                    <li class="fragment fade-up">Regulators care about <em>data accessed</em>, not just whether you "broke in"</li>
+                    <li class="fragment fade-up">When in doubt: stop, document, ask</li>
+                </ul>
+                <div class="highlight-box danger"><strong>Even good intentions don't immunise you</strong> from prosecution if you act outside written scope. This is not theoretical.</div>
+                <aside class="notes">Mention the Aaron Swartz case, the Coalfire-Iowa pen test arrest. These get attention.</aside>
+            </section>
+
+            <!-- Module recap -->
+            <section>
+                <h2>&#9989; Module recap</h2>
+                <div class="key-point"><strong>Mindset:</strong> ask what the system trusts and assumes &mdash; not just what it does.</div>
+                <div class="key-point"><strong>Kill chain:</strong> seven stages give you an attacker's playbook to defend against.</div>
+                <div class="key-point"><strong>Be a white hat:</strong> written scope first, exploit second, report third.</div>
+                <aside class="notes">Bridge to the lab: we'll spend 30 minutes doing passive + active recon on the Juice Shop instance from lab 1.</aside>
+            </section>
+
+            <!-- Lab 2 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 2: Reconnaissance basics</h2>
+                <h3>Map an attack surface using passive &amp; active techniques</h3>
+                <ul>
+                    <li>Passive: WHOIS, DNS, certificate-transparency lookup against a sample domain</li>
+                    <li>Active: <code>nmap</code> port + service scan against the lab target</li>
+                    <li>Banner grab and tech-stack fingerprint of OWASP Juice Shop</li>
+                    <li>Document findings as a recon report (template provided)</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~30 minutes &middot; <strong>Pair:</strong> Yes
+                </div>
+                <aside class="notes">Reinforce that all targets are inside the sandbox network. No internet-facing scans, even of "your own" systems.</aside>
+            </section>
+
+            <!-- Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; discussion</h2>
+                <p>Where in your stack are the most "interesting" trust boundaries?</p>
+                <aside class="notes">Use this to surface ideas they'll bring back into module 4 (threat maps).</aside>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

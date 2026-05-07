@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penetration Testing Fundamentals | DevSecOps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; overflow: auto; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#127919; Penetration Testing Fundamentals</h1>
+                <h2>What it is, how to scope it, how to run it</h2>
+                <h3>DevSecOps &mdash; Module 6 of 9</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+                </div>
+                <aside class="notes">Day 2 starts here. Recap day 1 briefly, then frame: yesterday we shifted left, today we test, monitor, automate.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Define penetration testing and contrast it with vulnerability scanning &amp; red teaming</li>
+                    <li class="fragment fade-up">Choose between black, grey, and white-box approaches</li>
+                    <li class="fragment fade-up">Author a Rules of Engagement and a scope statement</li>
+                    <li class="fragment fade-up">Walk the seven PTES phases of an engagement</li>
+                    <li class="fragment fade-up">Structure a useful pen-test report</li>
+                </ul>
+                <aside class="notes">By end-of-module, learners should be able to scope and defend a small internal pen-test exercise.</aside>
+            </section>
+
+            <!-- What is pen testing -->
+            <section>
+                <h2>&#128270; What is penetration testing?</h2>
+                <div class="concept-box">
+                    <h3>An authorised, simulated attack</h3>
+                    <p>A time-boxed engagement where a tester attempts to compromise a defined target the way a real adversary would &mdash; documenting each step and impact.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Goal:</strong> demonstrate exploitable risk, not just "we have a finding"</li>
+                    <li class="fragment fade-up"><strong>Output:</strong> a report with reproducible findings + remediation guidance</li>
+                    <li class="fragment fade-up"><strong>Authority:</strong> always written, always specific</li>
+                </ul>
+                <aside class="notes">"Authorised" is doing all the work in that definition. Pen testing without scope is cracking.</aside>
+            </section>
+
+            <!-- Pen test vs scan vs red team -->
+            <section>
+                <h2>&#129518; Pen test vs scan vs red team</h2>
+                <table>
+                    <tr><th></th><th>Vulnerability scan</th><th>Penetration test</th><th>Red team</th></tr>
+                    <tr><td>Goal</td><td>Find known issues</td><td>Exploit findings, prove impact</td><td>Test detection &amp; response</td></tr>
+                    <tr><td>Scope</td><td>Broad, automated</td><td>Defined &amp; targeted</td><td>Whole org; objectives-based</td></tr>
+                    <tr><td>Defenders aware?</td><td>Yes</td><td>Sometimes</td><td>No (handful of people only)</td></tr>
+                    <tr><td>Duration</td><td>Hours</td><td>Days&ndash;weeks</td><td>Weeks&ndash;months</td></tr>
+                    <tr><td>Output</td><td>Findings list</td><td>Narrative report</td><td>Adversary emulation report</td></tr>
+                </table>
+                <aside class="notes">Vocabulary matters when buying these services. Sales decks blur the lines.</aside>
+            </section>
+
+            <!-- Box colours -->
+            <section>
+                <h2>&#127979; Black, grey, white box</h2>
+                <div class="three-columns">
+                    <div class="card">
+                        <h4>Black box</h4>
+                        <p>Tester gets nothing &mdash; only the target's name.</p>
+                        <ul><li>Realistic external view</li><li>Slow start</li></ul>
+                    </div>
+                    <div class="card">
+                        <h4>Grey box</h4>
+                        <p>Tester gets some access &mdash; user creds, basic docs.</p>
+                        <ul><li>Best ROI for most apps</li><li>Realistic insider</li></ul>
+                    </div>
+                    <div class="card">
+                        <h4>White box</h4>
+                        <p>Tester gets source, IaC, architecture.</p>
+                        <ul><li>Deepest coverage</li><li>Best for security-critical code</li></ul>
+                    </div>
+                </div>
+                <div class="highlight-box success"><strong>Default for app pen tests:</strong> grey box with named accounts at each role.</div>
+                <aside class="notes">Choose based on what you're trying to learn. Black-box "is anyone exploiting our public surface?"; white-box "is the design sound?"</aside>
+            </section>
+
+            <!-- Methodology -->
+            <section>
+                <h2>&#128218; Methodologies you'll cite</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>PTES</strong> &mdash; Penetration Testing Execution Standard. Seven phases. Industry default.</li>
+                    <li class="fragment fade-up"><strong>OSSTMM</strong> &mdash; Open Source Security Testing Methodology Manual. Strong on metrics.</li>
+                    <li class="fragment fade-up"><strong>OWASP WSTG</strong> &mdash; Web Security Testing Guide. Web-app specific.</li>
+                    <li class="fragment fade-up"><strong>NIST SP 800-115</strong> &mdash; pragmatic federal guidance.</li>
+                    <li class="fragment fade-up"><strong>MITRE ATT&amp;CK</strong> &mdash; not a methodology, a coverage matrix.</li>
+                </ul>
+                <aside class="notes">Every methodology agrees on the broad shape. Don't get religious. Pick PTES + OWASP WSTG for web apps.</aside>
+            </section>
+
+            <!-- PTES phases -->
+            <section>
+                <h2>&#128272; PTES &mdash; the seven phases</h2>
+                <table>
+                    <tr><th>#</th><th>Phase</th><th>What happens</th></tr>
+                    <tr><td>1</td><td>Pre-engagement</td><td>Scope, RoE, contracts, contacts</td></tr>
+                    <tr><td>2</td><td>Intelligence gathering</td><td>OSINT, recon (passive &amp; active)</td></tr>
+                    <tr><td>3</td><td>Threat modelling</td><td>Map findings &rarr; likely attack paths</td></tr>
+                    <tr><td>4</td><td>Vulnerability analysis</td><td>Identify exploitable weaknesses</td></tr>
+                    <tr><td>5</td><td>Exploitation</td><td>Gain access; capture proof</td></tr>
+                    <tr><td>6</td><td>Post-exploitation</td><td>Privilege escalation, pivot, persist (in-scope)</td></tr>
+                    <tr><td>7</td><td>Reporting</td><td>Findings, impact, remediation, evidence</td></tr>
+                </table>
+                <aside class="notes">Phases 1 and 7 are where most engagements succeed or fail — clarity at the start, clarity at the end.</aside>
+            </section>
+
+            <!-- Scoping -->
+            <section>
+                <h2>&#128203; Scoping &mdash; what to nail down</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Targets:</strong> exact hosts, URLs, IP ranges, services. <em>No "all of *.example.com"</em>.</li>
+                    <li class="fragment fade-up"><strong>Out-of-scope:</strong> third parties, prod databases, social engineering staff, DoS</li>
+                    <li class="fragment fade-up"><strong>Time window:</strong> testing hours, freeze on releases, blackout dates</li>
+                    <li class="fragment fade-up"><strong>Source IPs:</strong> tester's expected traffic origin (so blue team can correlate)</li>
+                    <li class="fragment fade-up"><strong>Data handling:</strong> if data is accessed, what is allowed to leave?</li>
+                    <li class="fragment fade-up"><strong>Stop conditions:</strong> what triggers immediate halt &amp; notify?</li>
+                </ul>
+                <div class="highlight-box danger"><strong>Get all of this in writing &mdash; signed by someone with authority to authorise it.</strong></div>
+                <aside class="notes">"Stop conditions" is the most-skipped item and the most important. PII access, prod outage, evidence of real intrusion — define what you do.</aside>
+            </section>
+
+            <!-- RoE -->
+            <section>
+                <h2>&#128221; Rules of Engagement (RoE)</h2>
+                <div class="concept-box">
+                    <h3>The shorter document everyone signs</h3>
+                    <p>One page. Lists scope, allowed techniques, prohibited techniques, communication channels, escalation contacts, and signatures.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up">Tester must be able to point at the RoE on demand</li>
+                    <li class="fragment fade-up">Update it if anything material changes (and re-sign)</li>
+                    <li class="fragment fade-up">Keep a copy with the engagement evidence</li>
+                </ul>
+                <aside class="notes">RoE protects everyone — tester from accusations, defender from surprises, business from undefined risk.</aside>
+            </section>
+
+            <!-- Tester ethics -->
+            <section>
+                <h2>&#9878;&#65039; Tester ethics &amp; safety rails</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Do no harm</strong> &mdash; default to non-destructive proof-of-concept</li>
+                    <li class="fragment fade-up"><strong>Don't pivot beyond scope</strong> &mdash; even if a path opens up</li>
+                    <li class="fragment fade-up"><strong>Confidentiality</strong> &mdash; everything you saw belongs to the client</li>
+                    <li class="fragment fade-up"><strong>Stop &amp; notify</strong> if you stumble on real intrusion or law-enforcement-relevant material</li>
+                    <li class="fragment fade-up"><strong>Don't store findings on personal infrastructure</strong></li>
+                </ul>
+                <aside class="notes">Encourage learners to imagine their own data being on the system they're testing. That mindset shapes ethics.</aside>
+            </section>
+
+            <!-- Reporting -->
+            <section>
+                <h2>&#128221; The report &mdash; what good looks like</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Executive section</h4>
+                        <ul>
+                            <li>Scope &amp; dates</li>
+                            <li>Risk summary, business impact</li>
+                            <li>Key recommendations</li>
+                            <li>One-page heat-map</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Technical section</h4>
+                        <ul>
+                            <li>One finding per page: title, CVSS, repro steps, evidence, remediation</li>
+                            <li>Methodology &amp; tools</li>
+                            <li>Out-of-scope items &amp; assumptions</li>
+                            <li>Appendix: raw scan output</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="highlight-box success"><strong>Best report I ever read</strong> let an engineer fix a finding in one sitting without asking the tester a question.</div>
+                <aside class="notes">Reports are an artefact of professionalism. Sloppy reports = sloppy engagement, regardless of technical depth.</aside>
+            </section>
+
+            <!-- Common pitfalls -->
+            <section>
+                <h2>&#128293; Common pitfalls</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Tool-reported findings as the report</strong> &mdash; "did you actually try them?"</li>
+                    <li class="fragment fade-up"><strong>Compliance-only test</strong> &mdash; passes the audit, misses the threat</li>
+                    <li class="fragment fade-up"><strong>"Pen test as security strategy"</strong> &mdash; one a year is not a program</li>
+                    <li class="fragment fade-up"><strong>No retest</strong> &mdash; findings linger; no proof of fix</li>
+                    <li class="fragment fade-up"><strong>Findings without business framing</strong> &mdash; CVSS 9.8s that no one prioritises</li>
+                </ul>
+                <aside class="notes">Most pen-test "fail to deliver value" stories are explained by these.</aside>
+            </section>
+
+            <!-- Module recap -->
+            <section>
+                <h2>&#9989; Module recap</h2>
+                <div class="key-point"><strong>Pen test</strong> = authorised, scoped attempt to compromise a target with documented impact.</div>
+                <div class="key-point"><strong>PTES seven phases</strong> &mdash; pre-engagement and reporting bookend the technical work.</div>
+                <div class="key-point"><strong>RoE in writing, every time.</strong> Without scope, you don't have a pen test &mdash; you have a problem.</div>
+                <aside class="notes">Lab 5 follows: scoped mini pen-test against the lab targets — recon to report.</aside>
+            </section>
+
+            <!-- Lab 5 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 5: Scoped mini pen-test</h2>
+                <h3>Run a small grey-box engagement against the lab target</h3>
+                <ul>
+                    <li>Read the provided scope &amp; RoE document</li>
+                    <li>Recon: identify services, versions, accessible endpoints</li>
+                    <li>Vulnerability analysis: pick one likely path</li>
+                    <li>Exploit (lab target only) and capture evidence</li>
+                    <li>Write a one-page finding using the report template</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~45 minutes &middot; <strong>Pair:</strong> Yes
+                </div>
+                <aside class="notes">Constrain ambition — many learners get lost trying for a perfect chain. Capture one finding well, end on time.</aside>
+            </section>
+
+            <!-- Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; discussion</h2>
+                <p>What's the riskiest unscoped activity you'd be tempted to do?</p>
+                <aside class="notes">A great segue to "and that's why RoE matters" if anyone admits to ambitious behaviour.</aside>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

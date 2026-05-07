@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation & Jenkins Integration | DevSecOps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; overflow: auto; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#9881;&#65039; Automation &amp; Jenkins Integration</h1>
+                <h2>Embedding security checks &mdash; and gates &mdash; in the pipeline</h2>
+                <h3>DevSecOps &mdash; Module 9 of 9</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step active"></div>
+                </div>
+                <aside class="notes">Final module. Brings every previous tool together inside a Jenkins pipeline. Final lab is the capstone.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Articulate where security automation belongs in the pipeline</li>
+                    <li class="fragment fade-up">Hook prevention controls (pre-commit, PR-time) ahead of merge</li>
+                    <li class="fragment fade-up">Author a Jenkins declarative pipeline with security stages</li>
+                    <li class="fragment fade-up">Integrate OWASP ZAP and an SCA tool into Jenkins</li>
+                    <li class="fragment fade-up">Decide what fails the build &mdash; and design a "path to green"</li>
+                </ul>
+                <aside class="notes">Capstone module. Lab time is longer to let learners feel the workflow end-to-end.</aside>
+            </section>
+
+            <!-- Why automate -->
+            <section>
+                <h2>&#129504; Why automate security?</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Consistency</strong> &mdash; same check on every change, no exceptions</li>
+                    <li class="fragment fade-up"><strong>Speed</strong> &mdash; minutes per build, not days per audit</li>
+                    <li class="fragment fade-up"><strong>Forcing function</strong> &mdash; what's in CI gets fixed; what's in a PDF doesn't</li>
+                    <li class="fragment fade-up"><strong>Evidence by-product</strong> &mdash; every run is an audit trail</li>
+                    <li class="fragment fade-up"><strong>Scale</strong> &mdash; humans can't review thousands of dependencies</li>
+                </ul>
+                <div class="highlight-box success"><strong>Compounding rule:</strong> the earlier in the pipeline a check runs, the more times the cost is paid back.</div>
+                <aside class="notes">Recap: this is the operational form of "shift left" from module 1.</aside>
+            </section>
+
+            <!-- Pipeline stages map -->
+            <section>
+                <h2>&#128279; Where security checks belong</h2>
+                <table>
+                    <tr><th>Stage</th><th>Check</th><th>Fails the build?</th></tr>
+                    <tr><td>Pre-commit (local)</td><td>Linter, secret scan</td><td>Locally only</td></tr>
+                    <tr><td>PR / commit</td><td>SAST, SCA, IaC scan, unit tests</td><td>Yes (high severity)</td></tr>
+                    <tr><td>Build</td><td>Container scan, SBOM generation</td><td>Yes (criticals)</td></tr>
+                    <tr><td>Deploy to dev</td><td>Smoke tests</td><td>Yes</td></tr>
+                    <tr><td>Deploy to staging</td><td>DAST (ZAP baseline)</td><td>Yes (high)</td></tr>
+                    <tr><td>Nightly</td><td>DAST full scan, fuzz</td><td>Notify, don't block</td></tr>
+                    <tr><td>Production</td><td>Runtime monitoring (Module 8)</td><td>Page on-call</td></tr>
+                </table>
+                <aside class="notes">Use this table as a planning aid. Most teams skip pre-commit and pre-prod DAST — both are high-value adds.</aside>
+            </section>
+
+            <!-- Pipeline anatomy -->
+            <section>
+                <h2>&#128221; Anatomy of a security-aware pipeline</h2>
+                <pre><code class="language-groovy">pipeline {
+  agent any
+  stages {
+    stage('Build')      { steps { sh './gradlew assemble' } }
+    stage('SAST')       { steps { sh 'semgrep --config auto --error' } }
+    stage('SCA')        { steps { sh 'trivy fs --severity HIGH,CRITICAL --exit-code 1 .' } }
+    stage('Image scan') { steps { sh 'trivy image --severity CRITICAL --exit-code 1 app:$TAG' } }
+    stage('DAST (ZAP)') { steps { sh 'zap-baseline.py -t http://app.dev -I' } }
+  }
+}</code></pre>
+                <aside class="notes">Walk top-to-bottom on the slide. Each stage maps to a previous module — call them out as you go. Real pipelines also have unit tests, deploy stages, and post-actions; trimmed here for clarity.</aside>
+            </section>
+
+            <!-- ZAP integration -->
+            <section>
+                <h2>&#129422; Integrating OWASP ZAP</h2>
+                <pre><code class="language-groovy">stage('DAST &mdash; ZAP baseline') {
+  steps {
+    sh '''docker run --rm --network ci-net \
+            -v $WORKSPACE:/zap/wrk:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://app.dev:8080 \
+              -r zap-report.html -J zap-report.json -I'''
+  }
+  post {
+    always { publishHTML target: [reportFiles: 'zap-report.html', ...] }
+  }
+}</code></pre>
+                <div class="highlight-box"><strong>Pattern:</strong> baseline on every PR &middot; full scan nightly against staging &middot; use <code>-I</code> initially to ingest reports without failing builds; tighten thresholds after triage.</div>
+                <aside class="notes">Day-one mistake is failing builds on day one. Triage first, gate second.</aside>
+            </section>
+
+            <!-- Break the build policy -->
+            <section>
+                <h2>&#128164; What fails the build?</h2>
+                <table>
+                    <tr><th>Severity</th><th>Default policy</th></tr>
+                    <tr><td>Critical (RCE, auth bypass, leaked secret)</td><td>Block, no exceptions</td></tr>
+                    <tr><td>High</td><td>Block; bypass requires approval recorded as artefact</td></tr>
+                    <tr><td>Medium</td><td>Warn; track in backlog with SLA</td></tr>
+                    <tr><td>Low / informational</td><td>Report only; no block</td></tr>
+                </table>
+                <div class="highlight-box success"><strong>Path to green:</strong> every blocking finding must come with a documented remediation step. "Just fix it" isn't a path.</div>
+                <aside class="notes">Without a path to green, gates breed bypasses. Treat the gate as a contract, not a firewall.</aside>
+            </section>
+
+            <!-- Common anti-patterns -->
+            <section>
+                <h2>&#128293; Pipeline anti-patterns</h2>
+                <ul>
+                    <li class="fragment fade-up"><strong>Allow-list everything to "fix" the noise</strong> &mdash; you've turned off the tool</li>
+                    <li class="fragment fade-up"><strong>Run scans only on main</strong> &mdash; PRs ship findings; main inherits them</li>
+                    <li class="fragment fade-up"><strong>One mega-stage</strong> &mdash; failures swallow the actual reason</li>
+                    <li class="fragment fade-up"><strong>Tools that don't surface in the PR</strong> &mdash; if it's not in the diff, devs don't see it</li>
+                    <li class="fragment fade-up"><strong>"Runs nightly only"</strong> &mdash; problem found 18 hours after merge isn't shift-left</li>
+                </ul>
+                <aside class="notes">Pattern: keep the dev's feedback loop tight. Anything that breaks that breaks DevSecOps.</aside>
+            </section>
+
+            <!-- The whole picture (course recap, brief) -->
+            <section>
+                <h2>&#127881; Where each module fits &mdash; what to ship Monday</h2>
+                <table>
+                    <tr><th>Module</th><th>Output you can ship</th></tr>
+                    <tr><td>1 &mdash; What is DevSecOps?</td><td>Vocabulary &amp; maturity self-assessment</td></tr>
+                    <tr><td>2 &mdash; Thinking like a hacker</td><td>The "what does this trust?" lens at every code review</td></tr>
+                    <tr><td>3 &mdash; App vs Infra</td><td>The right team owns the right finding</td></tr>
+                    <tr><td>4 &mdash; Threat maps</td><td>Recurring threat-modelling sessions per service</td></tr>
+                    <tr><td>5 &mdash; OWASP &amp; upstream</td><td>SAST/SCA/secret-scan in PRs</td></tr>
+                    <tr><td>6 &mdash; Pen testing</td><td>Scoped engagements with usable RoEs</td></tr>
+                    <tr><td>7 &mdash; ZAP &amp; Metasploit</td><td>Hands-on tooling for purple-team practice</td></tr>
+                    <tr><td>8 &mdash; Azure Monitor</td><td>Detections + alerts for production reality</td></tr>
+                    <tr><td>9 &mdash; Jenkins</td><td>The pipeline that wires it all together</td></tr>
+                </table>
+                <aside class="notes">Each row is "what can you ship Monday?" — tangible.</aside>
+            </section>
+
+            <!-- Final lab callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Capstone Lab: Jenkins + ZAP DAST gate</h2>
+                <h3>Wire every previous module's tooling into one pipeline</h3>
+                <ul>
+                    <li>Connect to Jenkins (already running on your Cloud9 since Lab 1)</li>
+                    <li>Create the pipeline job &mdash; <code>Jenkinsfile</code> already scaffolded</li>
+                    <li><strong>Run:</strong> Build &rarr; SAST (Semgrep) &rarr; SCA (Trivy) &rarr; DAST (ZAP baseline) &rarr; Critical gate</li>
+                    <li>Watch the gate fail; ship a documented threshold-bump &mdash; watch it pass</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> 30 min &middot; <strong>This closes the course</strong>
+                </div>
+                <aside class="notes">Pre-stage check: the Lab 1 setup script started Jenkins in the background. Confirm before class that <code>docker exec ds-jenkins ls /var/sample-repo</code> returns the Jenkinsfile. If a learner's Jenkins didn't start, run `docker compose up -d` from `~/environment/devsecops-work/lab9/jenkins/` while another learner walks through Step 1.</aside>
+            </section>
+
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>

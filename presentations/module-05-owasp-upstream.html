@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OWASP & Upstream Threat Detection | DevSecOps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/monokai.css">
+    <style>
+        :root { --heading-color: #1a365d; --accent-color: #2b6cb0; --success-color: #2f855a; --warning-color: #c05621; --danger-color: #c53030; --text-color: #2d3748; }
+        .reveal { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text-color); font-size: 28px; }
+        .reveal .slides section { text-align: left; padding: 20px 40px; }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { color: var(--heading-color); font-weight: 700; text-transform: none; }
+        .reveal h1 { font-size: 2.2em; } .reveal h2 { font-size: 1.6em; } .reveal h3 { font-size: 1.3em; }
+        .title-slide { text-align: center !important; }
+        .title-slide h1 { color: #ffffff; font-size: 2.4em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 0.3em; }
+        .title-slide h2 { color: #e2e8f0; font-size: 1.4em; font-weight: 400; }
+        .title-slide h3 { color: #cbd5e0; font-size: 1.1em; font-weight: 300; }
+        .section-divider { text-align: center !important; }
+        .section-divider h2 { color: #ffffff; font-size: 2.0em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .section-divider h3 { color: #e2e8f0; font-size: 1.2em; font-weight: 400; }
+        .highlight-box { background: #ebf8ff; border-left: 4px solid var(--accent-color); padding: 20px 25px; border-radius: 0 8px 8px 0; margin: 15px 0; text-align: left; }
+        .highlight-box.success { background: #f0fff4; border-left-color: var(--success-color); }
+        .highlight-box.warning { background: #fffaf0; border-left-color: var(--warning-color); }
+        .highlight-box.danger { background: #fff5f5; border-left-color: var(--danger-color); }
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; text-align: left; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; text-align: left; }
+        .card { background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; text-align: left; }
+        .card h3, .card h4 { margin-top: 0; color: var(--accent-color); }
+        .concept-box { background: linear-gradient(135deg, #ebf8ff 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin: 15px 0; border: 1px solid #bee3f8; text-align: left; }
+        .concept-box h3, .concept-box h4 { color: var(--heading-color); margin-top: 0; }
+        .key-point { background: #ebf8ff; border: 2px solid var(--accent-color); border-radius: 12px; padding: 20px 25px; margin: 15px 0; text-align: left; font-size: 0.95em; }
+        .key-point strong { color: var(--accent-color); }
+        .lab-callout h2 { color: #ffffff; font-size: 1.8em; margin-bottom: 0.3em; }
+        .lab-callout h3 { color: #90cdf4; font-size: 1.3em; font-weight: 400; }
+        .lab-callout p { color: #e2e8f0; font-size: 1.0em; }
+        .lab-callout ul { color: #e2e8f0; text-align: left; display: inline-block; }
+        .lab-callout .highlight-box { background: rgba(255,255,255,0.1); border-left-color: #90cdf4; color: #e2e8f0; }
+        .questions-slide h2 { color: #ffffff; font-size: 2.2em; }
+        .questions-slide p { color: #e2e8f0; font-size: 1.2em; }
+        .module-progress { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .module-progress .step { width: 30px; height: 6px; border-radius: 3px; background: #cbd5e0; }
+        .module-progress .step.active { background: var(--accent-color); }
+        .module-progress .step.completed { background: var(--success-color); }
+        .reveal table { border-collapse: collapse; width: 100%; font-size: 0.75em; margin: 15px 0; }
+        .reveal table th { background: var(--heading-color); color: #ffffff; padding: 12px 16px; text-align: left; font-weight: 600; }
+        .reveal table td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        .reveal table tr:nth-child(even) { background: #f7fafc; }
+        .reveal ul, .reveal ol { text-align: left; display: block; margin-left: 1em; }
+        .reveal li { margin-bottom: 0.5em; line-height: 1.5; font-size: 0.9em; }
+        .reveal p { line-height: 1.6; }
+        .reveal pre code { font-size: 0.7em; line-height: 1.4; max-height: 500px; overflow: auto; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
+                <h1>&#128218; OWASP &amp; Upstream Threat Detection</h1>
+                <h2>The Top 10, and how to catch issues before production</h2>
+                <h3>DevSecOps &mdash; Module 5 of 9</h3>
+                <div class="module-progress">
+                    <div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step completed"></div><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+                </div>
+                <aside class="notes">Two threads here: OWASP as an organisation/resource set, and shift-left tooling that finds OWASP-class issues during development.</aside>
+            </section>
+
+            <!-- Objectives -->
+            <section>
+                <h2>&#127919; Module objectives</h2>
+                <ul>
+                    <li class="fragment fade-up">Recognise OWASP as an organisation, projects, and chapters</li>
+                    <li class="fragment fade-up">Walk all 10 categories of the OWASP Top 10 (2021)</li>
+                    <li class="fragment fade-up">Distinguish SAST, DAST, IAST, SCA, secret-scan, IaC-scan, container-scan</li>
+                    <li class="fragment fade-up">Pick the right scanner for the right artefact</li>
+                    <li class="fragment fade-up">Design an "upstream" detection chain that runs before merge</li>
+                </ul>
+                <aside class="notes">Density warning: there are 10 sub-slides for the Top 10. Pace at ~1 minute each.</aside>
+            </section>
+
+            <!-- OWASP -->
+            <section>
+                <h2>&#127757; What is OWASP?</h2>
+                <div class="concept-box">
+                    <h3>Open Worldwide Application Security Project</h3>
+                    <p>A non-profit, vendor-neutral community producing free resources, tools, and training for application security. Local chapters meet worldwide.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Top 10</strong> &mdash; awareness document, ranked categories of web-app risk</li>
+                    <li class="fragment fade-up"><strong>ASVS</strong> &mdash; Application Security Verification Standard (a checklist by maturity level)</li>
+                    <li class="fragment fade-up"><strong>SAMM</strong> &mdash; Software Assurance Maturity Model</li>
+                    <li class="fragment fade-up"><strong>Cheat Sheets</strong> &mdash; concise per-topic guidance</li>
+                    <li class="fragment fade-up"><strong>Tools</strong> &mdash; ZAP, Dependency-Check, Juice Shop, ModSecurity CRS</li>
+                </ul>
+                <aside class="notes">If learners take one bookmark away, it should be cheatsheetseries.owasp.org.</aside>
+            </section>
+
+            <!-- Top 10 list -->
+            <section>
+                <h2>&#127947; OWASP Top 10 (2021)</h2>
+                <table>
+                    <tr><th>#</th><th>Category</th><th>Movement</th></tr>
+                    <tr><td>A01</td><td>Broken Access Control</td><td>&uarr; from #5</td></tr>
+                    <tr><td>A02</td><td>Cryptographic Failures</td><td>&uarr; from #3 (was "Sensitive Data Exposure")</td></tr>
+                    <tr><td>A03</td><td>Injection</td><td>&darr; from #1</td></tr>
+                    <tr><td>A04</td><td>Insecure Design</td><td>NEW</td></tr>
+                    <tr><td>A05</td><td>Security Misconfiguration</td><td>&uarr; from #6</td></tr>
+                    <tr><td>A06</td><td>Vulnerable &amp; Outdated Components</td><td>&uarr; from #9</td></tr>
+                    <tr><td>A07</td><td>Identification &amp; Authentication Failures</td><td>&darr; from #2</td></tr>
+                    <tr><td>A08</td><td>Software &amp; Data Integrity Failures</td><td>NEW</td></tr>
+                    <tr><td>A09</td><td>Security Logging &amp; Monitoring Failures</td><td>&uarr; from #10</td></tr>
+                    <tr><td>A10</td><td>Server-Side Request Forgery (SSRF)</td><td>NEW</td></tr>
+                </table>
+                <aside class="notes">Note 2025 edition has been published in some locales but the 2021 list is still the most widely cited and most reflected in tooling.</aside>
+            </section>
+
+            <!-- A01 -->
+            <section>
+                <h2>&#128274; A01 &mdash; Broken Access Control</h2>
+                <div class="concept-box">
+                    <h3>The user accesses something they shouldn't</h3>
+                    <p>Includes IDOR, missing function-level checks, JWT tampering, force-browsing.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Smell:</strong> <code>/api/users/123/orders</code> &mdash; can I change <code>123</code> to <code>124</code>?</li>
+                    <li class="fragment fade-up"><strong>Fix:</strong> deny by default; check authorisation server-side on every request</li>
+                    <li class="fragment fade-up"><strong>Test:</strong> swap session tokens, change IDs, fuzz HTTP verbs</li>
+                </ul>
+                <aside class="notes">A01 is consistently the highest-impact and most under-tested category. Devs assume "the front-end won't show that button" — attackers don't use the front-end.</aside>
+            </section>
+
+            <!-- A02 -->
+            <section>
+                <h2>&#128275; A02 &mdash; Cryptographic Failures</h2>
+                <ul>
+                    <li class="fragment fade-up">Weak hashes (<code>MD5</code>, <code>SHA-1</code>) for passwords</li>
+                    <li class="fragment fade-up">Hard-coded keys in source / images</li>
+                    <li class="fragment fade-up">Plaintext data in transit (no TLS) or at rest (unencrypted volumes)</li>
+                    <li class="fragment fade-up">Weak randomness (<code>Math.random()</code> for tokens)</li>
+                </ul>
+                <div class="highlight-box success"><strong>Default:</strong> use platform crypto (libsodium, the language's <code>secrets</code> / <code>crypto.randomBytes</code>) and managed Key Vault. Don't roll your own.</div>
+                <aside class="notes">"Don't roll your own crypto" is the single most repeated security rule for a reason. Make peace with it.</aside>
+            </section>
+
+            <!-- A03 -->
+            <section>
+                <h2>&#128137; A03 &mdash; Injection</h2>
+                <div class="two-columns">
+                    <div class="card">
+                        <h4>Forms</h4>
+                        <ul>
+                            <li>SQL / NoSQL injection</li>
+                            <li>Command injection</li>
+                            <li>LDAP / XPath injection</li>
+                            <li>Server-side template injection</li>
+                            <li>Reflected / stored / DOM XSS</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Fix pattern</h4>
+                        <ul>
+                            <li>Parameterised APIs &mdash; bind, don't concatenate</li>
+                            <li>Output encoding by context (HTML/attr/JS/URL)</li>
+                            <li>Allow-list validation</li>
+                            <li>Use ORMs &amp; safe shell APIs</li>
+                        </ul>
+                    </div>
+                </div>
+                <aside class="notes">XSS lives here in 2021. Same root cause as SQL injection: data treated as code.</aside>
+            </section>
+
+            <!-- A04 -->
+            <section>
+                <h2>&#128221; A04 &mdash; Insecure Design</h2>
+                <div class="concept-box">
+                    <h3>The bug is in the architecture, not the code</h3>
+                    <p>Examples: a "forgot password" flow that emails the password; a public download URL with no rate limit; OTP that doesn't expire.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>You can't patch your way out</strong> &mdash; needs design review &amp; threat modelling</li>
+                    <li class="fragment fade-up">Connects directly to module 4 &mdash; STRIDE catches A04 issues</li>
+                </ul>
+                <aside class="notes">A04 is the explicit reward for doing threat modelling. Tools cannot find these by themselves.</aside>
+            </section>
+
+            <!-- A05 -->
+            <section>
+                <h2>&#9881;&#65039; A05 &mdash; Security Misconfiguration</h2>
+                <ul>
+                    <li class="fragment fade-up">Default admin credentials still in place</li>
+                    <li class="fragment fade-up">Verbose error pages leaking stack traces</li>
+                    <li class="fragment fade-up">CORS <code>*</code> with credentials</li>
+                    <li class="fragment fade-up">Cloud-storage buckets accidentally public</li>
+                    <li class="fragment fade-up">Unhardened container images, kernel sysctls left default</li>
+                </ul>
+                <div class="highlight-box"><strong>Detect with:</strong> IaC scanners (Checkov, tfsec), CIS benchmarks, Defender for Cloud recommendations.</div>
+                <aside class="notes">Connects to module 3 — most "infrastructure threats" are A05.</aside>
+            </section>
+
+            <!-- A06 -->
+            <section>
+                <h2>&#128230; A06 &mdash; Vulnerable &amp; Outdated Components</h2>
+                <ul>
+                    <li class="fragment fade-up">Direct &amp; transitive dependencies with known CVEs</li>
+                    <li class="fragment fade-up">Outdated base images (<code>ubuntu:18.04</code>)</li>
+                    <li class="fragment fade-up">Abandoned libraries</li>
+                </ul>
+                <div class="highlight-box success"><strong>Detect with SCA tools:</strong> Dependabot, Renovate, Snyk, OWASP Dependency-Check, Trivy. Generate &amp; sign an SBOM (CycloneDX or SPDX).</div>
+                <div class="highlight-box danger"><strong>Why it matters:</strong> Log4Shell (Dec 2021) was a single Java logging library compromise that touched millions of apps overnight.</div>
+                <aside class="notes">SBOM is becoming a regulatory expectation (US Executive Order 14028). Worth knowing the term.</aside>
+            </section>
+
+            <!-- A07 -->
+            <section>
+                <h2>&#128100; A07 &mdash; ID &amp; Authentication Failures</h2>
+                <ul>
+                    <li class="fragment fade-up">Weak password policy / credential stuffing</li>
+                    <li class="fragment fade-up">No MFA on privileged accounts</li>
+                    <li class="fragment fade-up">Session fixation, predictable session IDs</li>
+                    <li class="fragment fade-up">Token never expires; logout doesn't actually invalidate</li>
+                    <li class="fragment fade-up">Recovery flows that leak account existence</li>
+                </ul>
+                <div class="highlight-box success"><strong>Default to identity providers:</strong> Entra ID, Auth0, Okta, Cognito. Resist the urge to build your own login.</div>
+                <aside class="notes">If your team is still building login screens from scratch, that's a strong refactor candidate.</aside>
+            </section>
+
+            <!-- A08 -->
+            <section>
+                <h2>&#128279; A08 &mdash; Software &amp; Data Integrity Failures</h2>
+                <ul>
+                    <li class="fragment fade-up">Unsigned package downloads (<code>curl | bash</code>)</li>
+                    <li class="fragment fade-up">Auto-update from untrusted source</li>
+                    <li class="fragment fade-up">Insecure deserialisation</li>
+                    <li class="fragment fade-up">Unverified CI/CD plugins, untrusted GitHub Actions</li>
+                </ul>
+                <div class="highlight-box"><strong>Mitigations:</strong> sign artefacts (cosign / Sigstore), use SLSA build levels, lock dependency versions, review third-party CI plugins.</div>
+                <aside class="notes">The post-SolarWinds category. Supply-chain attacks live here.</aside>
+            </section>
+
+            <!-- A09 -->
+            <section>
+                <h2>&#128221; A09 &mdash; Logging &amp; Monitoring Failures</h2>
+                <ul>
+                    <li class="fragment fade-up">No audit log for sensitive actions</li>
+                    <li class="fragment fade-up">Logs don't reach a SIEM / centralised store</li>
+                    <li class="fragment fade-up">Log fields swallow PII, can't be redacted later</li>
+                    <li class="fragment fade-up">No alerting on auth failure spikes</li>
+                </ul>
+                <div class="highlight-box"><strong>Sets up Module 8</strong> &mdash; we'll do this properly with Azure Monitor and KQL.</div>
+                <aside class="notes">Why is logging in the Top 10? Because you can't respond to what you can't see.</aside>
+            </section>
+
+            <!-- A10 -->
+            <section>
+                <h2>&#128519; A10 &mdash; Server-Side Request Forgery (SSRF)</h2>
+                <div class="concept-box">
+                    <h3>The server fetches a URL the attacker controls</h3>
+                    <p>Classic target: cloud metadata services (<code>169.254.169.254</code>) &rarr; steal instance credentials &rarr; pivot.</p>
+                </div>
+                <ul>
+                    <li class="fragment fade-up"><strong>Smell:</strong> any feature that takes a URL parameter and fetches it server-side</li>
+                    <li class="fragment fade-up"><strong>Mitigations:</strong> allow-list outbound destinations, disable redirects, use IMDSv2 in AWS / Azure metadata equivalents, network egress filtering</li>
+                </ul>
+                <aside class="notes">SSRF graduated to its own slot in 2021 thanks to cloud-attack reality. Capital One breach is the reference incident.</aside>
+            </section>
+
+            <!-- Detection chain -->
+            <section>
+                <h2>&#128270; Upstream detection &mdash; the chain</h2>
+                <table>
+                    <tr><th>Stage</th><th>Tool class</th><th>Catches</th></tr>
+                    <tr><td>IDE</td><td>Linters, secret detectors</td><td>Hard-coded secrets, obvious bugs</td></tr>
+                    <tr><td>Pre-commit</td><td><code>pre-commit</code>, <code>gitleaks</code></td><td>Secrets, format issues</td></tr>
+                    <tr><td>PR / CI</td><td>SAST, SCA, IaC-scan</td><td>Code patterns, vulnerable deps, mis-config</td></tr>
+                    <tr><td>Build</td><td>Container scan, SBOM</td><td>Image CVEs, integrity</td></tr>
+                    <tr><td>Pre-prod</td><td>DAST, IAST, fuzz</td><td>Runtime behaviour, auth flaws</td></tr>
+                    <tr><td>Production</td><td>WAF, RASP, SIEM</td><td>Active attacks, drift</td></tr>
+                </table>
+                <aside class="notes">Frame as a "chain" — each link narrows the cost of the find. Each tool finds different categories; you need several.</aside>
+            </section>
+
+            <!-- Tool taxonomy -->
+            <section>
+                <h2>&#128295; The taxonomy in plain English</h2>
+                <table>
+                    <tr><th>Acronym</th><th>What it does</th><th>Example tools</th></tr>
+                    <tr><td>SAST</td><td>Reads your source code for bug patterns</td><td>SonarQube, Semgrep, CodeQL</td></tr>
+                    <tr><td>SCA</td><td>Inspects dependency tree for known CVEs</td><td>Dependabot, Snyk, Trivy</td></tr>
+                    <tr><td>Secret scan</td><td>Looks for credentials in code/history</td><td>gitleaks, trufflehog</td></tr>
+                    <tr><td>IaC scan</td><td>Reads Terraform/ARM/Bicep for misconfig</td><td>Checkov, tfsec, KICS</td></tr>
+                    <tr><td>Image scan</td><td>Inspects container layers for CVEs</td><td>Trivy, Grype, Defender</td></tr>
+                    <tr><td>DAST</td><td>Runs the app, sends traffic, watches</td><td>OWASP ZAP, Burp</td></tr>
+                    <tr><td>IAST</td><td>Instruments app at runtime, traces taint</td><td>Contrast, Seeker</td></tr>
+                </table>
+                <aside class="notes">No single tool finds everything. Picking the right one for the artefact is half the battle.</aside>
+            </section>
+
+            <!-- Module recap -->
+            <section>
+                <h2>&#9989; Module recap</h2>
+                <div class="key-point"><strong>OWASP</strong> is your free curriculum: Top 10, ASVS, Cheat Sheets, ZAP, Juice Shop.</div>
+                <div class="key-point"><strong>Top 10 in one line:</strong> access control &amp; injection still dominate; design &amp; supply chain are rising.</div>
+                <div class="key-point"><strong>Upstream detection</strong> = layered scanners running before code reaches production.</div>
+                <aside class="notes">Hand off into lab 4 — exploit then fix two Top 10 categories on Juice Shop.</aside>
+            </section>
+
+            <!-- Lab 4 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 4: Exploit &amp; fix OWASP Top 10</h2>
+                <h3>Hands-on with two categories on OWASP Juice Shop</h3>
+                <ul>
+                    <li>Find &amp; exploit a broken-access-control bug (A01)</li>
+                    <li>Find &amp; exploit an injection bug (A03)</li>
+                    <li>Run an SCA scan against the Juice Shop dependencies (A06)</li>
+                    <li>Map each finding to its OWASP Top 10 category and propose a fix</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~45 minutes &middot; <strong>Pair:</strong> Yes
+                </div>
+                <aside class="notes">Juice Shop has a built-in score board — don't open it before learners try, otherwise they'll spoil themselves.</aside>
+            </section>
+
+            <!-- Questions -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
+                <h2>&#10067; Questions &amp; discussion</h2>
+                <p>Which Top 10 category does your team have the weakest controls for today?</p>
+                <aside class="notes">Use answers to focus where day 2's tools will pay off most.</aside>
+            </section>
+
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/notes/notes.js"></script>
+    <script>
+        Reveal.initialize({ hash: true, slideNumber: true, transition: 'slide', plugins: [RevealHighlight, RevealNotes] });
+    </script>
+</body>
+</html>
