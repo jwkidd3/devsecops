@@ -3,13 +3,14 @@
 #
 # Usage:  bash scripts/setup-cloud9.sh <your-name>
 #
-# Idempotent: safe to re-run.
+# Fully idempotent. Safe to re-run after partial failure or environment drift:
+# every step checks current state and either skips work or reconciles.
 
-set -euo pipefail
+set -uo pipefail
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <your-name>"
-  echo "  <your-name> is used to namespace your lab containers."
+  echo "  <your-name> namespaces your lab containers (e.g. 'alexk')."
   exit 1
 fi
 
@@ -17,91 +18,162 @@ YOU="$1"
 NETWORK="devsecops-lab"
 JUICE_NAME="juice-shop-${YOU}"
 META_NAME="metasploitable-${YOU}"
-
-log() { printf "\n\033[1;34m==> %s\033[0m\n" "$*"; }
+LAB9_DIR="$HOME/environment/devsecops-work/lab9"
 
 # ---------------------------------------------------------------------------
-log "1/6  Installing host tools (nmap, jq, git, openssl)"
+# Output helpers + failure tracking
 # ---------------------------------------------------------------------------
-if command -v dnf >/dev/null 2>&1; then
-  sudo dnf -y install -q nmap jq git openssl >/dev/null
-elif command -v yum >/dev/null 2>&1; then
-  sudo yum -y install -q nmap jq git openssl >/dev/null
-elif command -v apt-get >/dev/null 2>&1; then
-  sudo apt-get update -qq
-  sudo apt-get install -y -qq nmap jq git openssl
+WARN_COUNT=0
+
+log()  { printf "\n\033[1;34m==> %s\033[0m\n" "$*"; }
+ok()   { printf "    \033[0;32m✓\033[0m %s\n" "$*"; }
+skip() { printf "    \033[0;90m·\033[0m %s\n" "$*"; }
+warn() { printf "    \033[1;33m!\033[0m %s\n" "$*"; WARN_COUNT=$((WARN_COUNT + 1)); }
+
+# ---------------------------------------------------------------------------
+log "1/7  Host tools (nmap, jq, git, openssl)"
+# ---------------------------------------------------------------------------
+need_install=()
+for t in nmap jq git openssl whois; do
+  command -v "$t" >/dev/null 2>&1 || need_install+=("$t")
+done
+
+if (( ${#need_install[@]} == 0 )); then
+  skip "all tools already installed"
 else
-  echo "WARN: no supported package manager found; install nmap/jq manually." >&2
+  echo "    installing: ${need_install[*]}"
+  if command -v dnf >/dev/null 2>&1; then
+    sudo dnf -y install -q "${need_install[@]}" >/dev/null && ok "installed via dnf" || warn "dnf install hit errors"
+  elif command -v yum >/dev/null 2>&1; then
+    sudo yum -y install -q "${need_install[@]}" >/dev/null && ok "installed via yum" || warn "yum install hit errors"
+  elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update -qq && sudo apt-get install -y -qq "${need_install[@]}" \
+      && ok "installed via apt-get" || warn "apt-get install hit errors"
+  else
+    warn "no supported package manager found; install ${need_install[*]} manually"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
-log "2/6  Verifying Docker"
+log "2/7  Docker"
 # ---------------------------------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
-  echo "Docker not found. On Amazon Linux: sudo yum install -y docker && sudo systemctl start docker"
-  exit 1
-fi
-sudo systemctl start docker 2>/dev/null || true
-sudo usermod -aG docker "$USER" || true
-# Pick up new group membership in this shell
-if ! docker ps >/dev/null 2>&1; then
-  echo "Docker daemon not reachable. You may need to log out & back in for the docker group to apply."
-  echo "Or run subsequent docker commands with sudo."
-fi
-
-# ---------------------------------------------------------------------------
-log "3/6  Creating isolated lab network ($NETWORK)"
-# ---------------------------------------------------------------------------
-docker network create --driver bridge "$NETWORK" 2>/dev/null || \
-  echo "(network already exists)"
-
-# ---------------------------------------------------------------------------
-log "4/6  Pulling target images"
-# ---------------------------------------------------------------------------
-docker pull bkimminich/juice-shop:latest >/dev/null
-docker pull tleemcjr/metasploitable2:latest >/dev/null
-
-# ---------------------------------------------------------------------------
-log "5/6  Starting Juice Shop ($JUICE_NAME)"
-# ---------------------------------------------------------------------------
-if [[ -n "$(docker ps -aq -f name=^${JUICE_NAME}$)" ]]; then
-  docker start "$JUICE_NAME" >/dev/null
+  warn "docker not found — Cloud9 should have it preinstalled"
 else
+  sudo systemctl start docker 2>/dev/null || true
+  sudo usermod -aG docker "$USER" 2>/dev/null || true
+  if docker ps >/dev/null 2>&1; then
+    ok "docker daemon reachable"
+  else
+    warn "docker daemon not reachable — open a fresh terminal or use sudo"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+log "3/7  Lab network ($NETWORK)"
+# ---------------------------------------------------------------------------
+if docker network inspect "$NETWORK" >/dev/null 2>&1; then
+  skip "network exists"
+else
+  docker network create --driver bridge "$NETWORK" >/dev/null 2>&1 \
+    && ok "network created" \
+    || warn "could not create network"
+fi
+
+# ---------------------------------------------------------------------------
+# Helper: pull an image only if missing; report what happened
+# ---------------------------------------------------------------------------
+pull_if_missing() {
+  local img="$1"
+  if docker image inspect "$img" >/dev/null 2>&1; then
+    skip "$img already pulled"
+  else
+    if docker pull "$img" >/dev/null 2>&1; then
+      ok "pulled $img"
+    else
+      warn "could not pull $img — re-run setup after fixing (often disk or rate limit)"
+    fi
+  fi
+}
+
+# ---------------------------------------------------------------------------
+log "4/7  Target images"
+# ---------------------------------------------------------------------------
+pull_if_missing "bkimminich/juice-shop:latest"
+pull_if_missing "tleemcjr/metasploitable2:latest"
+
+# ---------------------------------------------------------------------------
+# Helper: ensure a container is running with the given name on the lab network
+# ---------------------------------------------------------------------------
+ensure_running() {
+  local name="$1"; shift
+  local state
+  state=$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null || echo "missing")
+  case "$state" in
+    running)
+      skip "$name already running"
+      ;;
+    exited|created|paused)
+      docker start "$name" >/dev/null 2>&1 \
+        && ok "started existing $name" \
+        || { warn "could not start $name — recreating"; docker rm -f "$name" >/dev/null 2>&1; "$@"; }
+      ;;
+    *)
+      "$@" && ok "created $name" || warn "could not create $name"
+      ;;
+  esac
+}
+
+# Free a host port if another container of a known prefix is holding it
+free_port_if_held_by_stale() {
+  local port="$1" prefix="$2" keep="$3"
+  local stale
+  stale=$(docker ps -a --filter "publish=${port}" --format '{{.Names}}' \
+          | grep "^${prefix}" | grep -v "^${keep}$" || true)
+  if [[ -n "$stale" ]]; then
+    while IFS= read -r name; do
+      [[ -z "$name" ]] && continue
+      echo "    port $port held by stale '$name' — removing"
+      docker rm -f "$name" >/dev/null 2>&1 || warn "could not remove $name"
+    done <<< "$stale"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+log "5/7  Juice Shop ($JUICE_NAME)"
+# ---------------------------------------------------------------------------
+free_port_if_held_by_stale 3000 "juice-shop-" "$JUICE_NAME"
+ensure_running "$JUICE_NAME" \
   docker run -d \
     --name "$JUICE_NAME" \
     --network "$NETWORK" \
     --network-alias juice-shop \
     -p 3000:3000 \
-    bkimminich/juice-shop:latest >/dev/null
-fi
+    bkimminich/juice-shop:latest
 
 # ---------------------------------------------------------------------------
-log "6/6  Starting Metasploitable ($META_NAME)"
+log "6/7  Metasploitable ($META_NAME)"
 # ---------------------------------------------------------------------------
-if [[ -n "$(docker ps -aq -f name=^${META_NAME}$)" ]]; then
-  docker start "$META_NAME" >/dev/null
-else
+ensure_running "$META_NAME" \
   docker run -d \
     --name "$META_NAME" \
     --network "$NETWORK" \
     --network-alias metasploitable \
     --hostname metasploitable \
-    tleemcjr/metasploitable2:latest >/dev/null
-fi
+    tleemcjr/metasploitable2:latest
 
 # ---------------------------------------------------------------------------
-log "Pulling helper tool images (so labs don't pause to pull later)"
+log "7/7  Helper tool images"
 # ---------------------------------------------------------------------------
-docker pull aquasec/trivy:latest >/dev/null
-docker pull metasploitframework/metasploit-framework:latest >/dev/null
-docker pull ghcr.io/zaproxy/zaproxy:stable >/dev/null
-docker pull jenkins/jenkins:lts-jdk17 >/dev/null
-docker pull returntocorp/semgrep:latest >/dev/null
+pull_if_missing "aquasec/trivy:latest"
+pull_if_missing "metasploitframework/metasploit-framework:latest"
+pull_if_missing "ghcr.io/zaproxy/zaproxy:stable"
+pull_if_missing "jenkins/jenkins:lts-jdk17"
+pull_if_missing "returntocorp/semgrep:latest"
 
 # ---------------------------------------------------------------------------
-log "Pre-staging Jenkins for Lab 9 capstone"
+log "Lab 9 scaffold (compose file + sample repo)"
 # ---------------------------------------------------------------------------
-LAB9_DIR="$HOME/environment/devsecops-work/lab9"
 mkdir -p "$LAB9_DIR/jenkins" "$LAB9_DIR/sample-repo"
 
 cat > "$LAB9_DIR/jenkins/docker-compose.yml" <<'COMPOSE'
@@ -124,6 +196,7 @@ networks:
   devsecops-lab:
     external: true
 COMPOSE
+ok "compose file written"
 
 cat > "$LAB9_DIR/sample-repo/Jenkinsfile" <<'JENKINSFILE'
 pipeline {
@@ -131,9 +204,7 @@ pipeline {
   options { timestamps() }
   environment { TARGET_URL = 'http://juice-shop:3000' }
   stages {
-    stage('Checkout') {
-      steps { checkout scm; sh 'ls -la' }
-    }
+    stage('Checkout') { steps { checkout scm; sh 'ls -la' } }
     stage('SAST — Semgrep') {
       steps {
         sh '''docker run --rm -v $WORKSPACE:/src returntocorp/semgrep:latest \
@@ -169,46 +240,80 @@ pipeline {
   post { always { publishHTML target: [reportDir: '.', reportFiles: 'zap-baseline.html', reportName: 'ZAP Baseline'] } }
 }
 JENKINSFILE
+ok "Jenkinsfile written"
 
-cat > "$LAB9_DIR/sample-repo/README.md" <<'README'
-# Sample app for DevSecOps Lab 9
-README
+[[ -f "$LAB9_DIR/sample-repo/README.md" ]] || \
+  echo "# Sample app for DevSecOps Lab 9" > "$LAB9_DIR/sample-repo/README.md"
 
-# Initialize the sample repo so Jenkins can clone it
+# Initialise the sample repo if not already a git repo
 if [[ ! -d "$LAB9_DIR/sample-repo/.git" ]]; then
   ( cd "$LAB9_DIR/sample-repo" && git init -q -b main \
     && git -c user.email=lab@example.com -c user.name=Lab add . \
-    && git -c user.email=lab@example.com -c user.name=Lab commit -q -m "Initial sample" )
+    && git -c user.email=lab@example.com -c user.name=Lab commit -q -m "Initial sample" ) \
+    && ok "git repo initialised" || warn "could not init sample repo"
+else
+  skip "sample repo already initialised"
 fi
 
-# Start Jenkins in background — plugins install will take 5-10 min asynchronously
-( cd "$LAB9_DIR/jenkins" && SAMPLE_REPO_PATH="$LAB9_DIR/sample-repo" \
-  docker compose up -d >/dev/null 2>&1 ) || \
-  echo "WARN: jenkins compose up failed — Lab 9 will need manual start"
+# ---------------------------------------------------------------------------
+log "Jenkins"
+# ---------------------------------------------------------------------------
+# Detect config drift: if ds-jenkins exists but doesn't have the /var/sample-repo
+# bind mount, tear it down so compose recreates it correctly.
+if docker inspect ds-jenkins >/dev/null 2>&1; then
+  if ! docker inspect ds-jenkins \
+       | jq -e '.[0].Mounts[] | select(.Destination == "/var/sample-repo")' >/dev/null 2>&1; then
+    echo "    Jenkins config drift detected (no /var/sample-repo mount) — recreating"
+    ( cd "$LAB9_DIR/jenkins" && docker compose down >/dev/null 2>&1 ) || true
+  fi
+fi
 
-# Install jq + docker CLI inside Jenkins (small, runs in background)
-(
-  sleep 30
-  docker exec -u root ds-jenkins bash -c '
-    apt-get update -qq &&
-    apt-get install -y -qq --no-install-recommends docker.io jq &&
-    apt-get clean
-  ' >/dev/null 2>&1
-) &
+# Bring Jenkins up (no-op if already running with current compose)
+if ( cd "$LAB9_DIR/jenkins" && SAMPLE_REPO_PATH="$LAB9_DIR/sample-repo" \
+     docker compose up -d >/dev/null 2>&1 ); then
+  if docker ps --filter name=^ds-jenkins$ --filter status=running --quiet | grep -q .; then
+    ok "Jenkins running on http://localhost:8081"
+  else
+    warn "Jenkins compose succeeded but container not running"
+  fi
+else
+  warn "Jenkins compose up failed — see: docker compose -f $LAB9_DIR/jenkins/docker-compose.yml logs"
+fi
+
+# Install jq + docker CLI inside Jenkins (needed for the pipeline gate stage).
+# Idempotent: skip if already present.
+if docker exec ds-jenkins which jq >/dev/null 2>&1 \
+   && docker exec ds-jenkins which docker >/dev/null 2>&1; then
+  skip "jq + docker CLI already in Jenkins"
+elif docker ps --filter name=^ds-jenkins$ --filter status=running --quiet | grep -q .; then
+  echo "    waiting for Jenkins to be ready (up to 60s) ..."
+  for _ in 1 2 3 4 5 6; do
+    docker exec ds-jenkins true >/dev/null 2>&1 && break
+    sleep 10
+  done
+  if docker exec -u root ds-jenkins bash -c '
+       apt-get update -qq && \
+       apt-get install -y -qq --no-install-recommends docker.io jq && \
+       apt-get clean
+     ' >/dev/null 2>&1; then
+    ok "installed jq + docker.io inside Jenkins"
+  else
+    warn "could not install jq+docker inside Jenkins (re-run setup later)"
+  fi
+fi
 
 # ---------------------------------------------------------------------------
-log "Verification"
+log "Verification & environment notes"
 # ---------------------------------------------------------------------------
 META_IP=$(docker inspect "$META_NAME" \
-  --format "{{ (index .NetworkSettings.Networks \"$NETWORK\").IPAddress }}")
+  --format "{{ (index .NetworkSettings.Networks \"$NETWORK\").IPAddress }}" 2>/dev/null)
+if [[ -z "$META_IP" || "$META_IP" == "<no value>" ]]; then
+  META_IP=$(docker inspect "$META_NAME" 2>/dev/null \
+            | jq -r '.[0].NetworkSettings.Networks["devsecops-lab"].IPAddress // ""')
+fi
+META_IP="${META_IP:-<unavailable — restart $META_NAME>}"
 
-# Wait briefly for Jenkins to start writing its log so the password command works later
-sleep 5
-JENKINS_PWD_FILE="$LAB9_DIR/jenkins-admin-password.txt"
-echo "(Jenkins admin password will appear after first boot — read with:)" > "$JENKINS_PWD_FILE"
-echo "  docker exec ds-jenkins cat /var/jenkins_home/secrets/initialAdminPassword" >> "$JENKINS_PWD_FILE"
-
-cat <<EOF | tee "$HOME/devsecops-lab-env.md"
+cat > "$HOME/devsecops-lab-env.md" <<EOF
 
 ## DevSecOps lab environment — saved $(date -u +%FT%TZ)
 
@@ -226,13 +331,19 @@ cat <<EOF | tee "$HOME/devsecops-lab-env.md"
 | Lab 9 sample repo   | $LAB9_DIR/sample-repo (mounted at /var/sample-repo in Jenkins) |
 
 EOF
+ok "environment notes saved to ~/devsecops-lab-env.md"
 
+# ---------------------------------------------------------------------------
 echo
-echo "Verify Juice Shop:     curl -sI http://localhost:3000 | head -1"
-echo "Verify Metasploitable: nmap -Pn -p 21,22,80 ${META_IP}"
-echo "Verify Jenkins:        curl -sI http://localhost:8081 | head -1   (may take 60-90s on first boot)"
+if (( WARN_COUNT == 0 )); then
+  printf "\033[1;32mAll set.\033[0m %d warnings.\n" "$WARN_COUNT"
+else
+  printf "\033[1;33mFinished with %d warnings.\033[0m Re-run this script to retry skipped/failed steps.\n" "$WARN_COUNT"
+fi
 echo
-echo "Jenkins is starting in the background — plugins install over the next ~10 minutes."
-echo "By Day 2 afternoon (Lab 9), it will be ready. No further action needed today."
+echo "Quick verify:"
+echo "  curl -sI http://localhost:3000   | head -1   # Juice Shop"
+echo "  nmap -Pn -p 21,22,80 ${META_IP}              # Metasploitable"
+echo "  curl -sI http://localhost:8081   | head -1   # Jenkins (60-90s on first boot)"
 echo
-echo "All set. Continue to Step 5 of the lab README."
+exit 0
