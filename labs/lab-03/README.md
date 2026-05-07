@@ -17,10 +17,18 @@
 ### Prerequisites
 
 - Module 4 completed
-- A diagramming tool — choose one:
-  - Whiteboard, pen & paper
-  - [draw.io](https://app.diagrams.net) (works in a Cloud9 browser tab)
-  - [OWASP Threat Dragon](https://www.threatdragon.com/) (browser version)
+- A diagramming tool — pick whichever is fastest for you. All work in a browser tab alongside Cloud9:
+
+| Tool | Best for | Cost |
+|---|---|---|
+| [OWASP Threat Dragon](https://www.threatdragon.com/) | DFDs with built-in STRIDE threat suggestions per element | Free |
+| [draw.io / diagrams.net](https://app.diagrams.net) | Pure DFD drawing; clean export to PNG/PDF | Free |
+| [Miro](https://miro.com) | Real-time multi-person whiteboarding (pair work) | Free tier |
+| [Microsoft Threat Modeling Tool](https://aka.ms/threatmodelingtool) | STRIDE-driven analysis with reporting | Free, Windows only |
+| [pytm](https://github.com/izar/pytm) | Threat-models-as-code (Python) for repeat / CI use | Free |
+| Whiteboard, pen & paper | Fastest for first sessions; snap a photo to upload | — |
+
+If your pair is remote, Miro or Threat Dragon (cloud edition) are the easiest. If you're co-located, a whiteboard beats every tool for the first 30 minutes — you can always digitise after.
 
 > ⏱ **Duration:** ~45 minutes
 > 👥 **Pair:** Yes
