@@ -118,12 +118,13 @@ else
             echo
             echo "    +-------------------------------------------------------------+"
             echo "    | REBOOT REQUIRED                                             |"
-            echo "    | The EBS volume is now ${TARGET_GB} GB at the API level, but the    |"
-            echo "    | kernel didn't pick it up. Reboot the Cloud9 EC2 instance:   |"
+            echo "    | EBS is now ${TARGET_GB} GB at the API level, but the kernel needs   |"
+            echo "    | a reboot to see it. Run this in the Cloud9 terminal:        |"
             echo "    |                                                             |"
-            echo "    |   EC2 console -> your instance -> Instance state -> Reboot  |"
+            echo "    |     sudo reboot                                             |"
             echo "    |                                                             |"
-            echo "    | After reboot, reopen Cloud9 and re-run this script.         |"
+            echo "    | Cloud9 will reconnect automatically after ~30 sec.          |"
+            echo "    | Then re-run this script — it will skip the resize step.     |"
             echo "    +-------------------------------------------------------------+"
             echo
             exit 0
