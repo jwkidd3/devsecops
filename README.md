@@ -73,8 +73,8 @@ bash tests/smoke.sh <test-name>       # ~10 min — runs on a Cloud9 to verify r
 ## Required environment
 
 - **AWS Cloud9** environment, one per learner, in the shared training account
-  - Suggested instance: `t3.large` (8 GB RAM) on Amazon Linux 2 / 2023
-  - Each learner names their environment `devsecops-lab-<your-name>`
+  - Instance type: `m5.large` (Amazon Linux 2023, SSH connection)
+  - Each learner names their environment `devsecops-lab-<your-name>` and creates it themselves in Lab 1
   - IAM role `devsecops-lab-role` attached for CloudWatch / SNS access in Lab 8
 - Docker (already installed on Cloud9 AMIs) — runs targets, scanners, Jenkins
 - An email address each learner can receive at (Lab 8 SNS subscription)

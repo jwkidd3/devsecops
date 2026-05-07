@@ -6,25 +6,19 @@ This guide is for the person delivering the course. Learners should not see it d
 
 ## Pre-class checklist (the day before)
 
-Learners' Lab 1 is now just `git clone && bash setup-cloud9.sh <name>`. Everything below is your job, done before learners arrive.
+Learners create their own Cloud9 in Lab 1. Everything below is your job, done before learners arrive.
 
-### Per-learner Cloud9 provisioning
+### Account-level setup (once per cohort)
 
-For each learner, in the AWS console:
-
-- [ ] **Cloud9 → Create environment** — name `devsecops-lab-<name>`, **t3.large**, Amazon Linux 2023, SSH (not SSM), default VPC
-- [ ] Open the IDE → gear icon → **AWS Settings** → turn **OFF** "AWS managed temporary credentials"
-- [ ] **EC2 console** → find the instance `aws-cloud9-devsecops-lab-<name>-...` → **Actions → Security → Modify IAM role** → choose `devsecops-lab-role`
-
-### Account-level setup (once)
-
+- [ ] AWS shared training account exists; learners have sign-in credentials
 - [ ] IAM role `devsecops-lab-role` exists (trust: EC2) with managed policies attached: `CloudWatchLogsFullAccess`, `CloudWatchFullAccessV2`, `AmazonSNSFullAccess`
-- [ ] Course materials are accessible (private git repo learners can clone from Cloud9)
+- [ ] Course materials repo URL is ready to give learners (`git clone` target for Lab 1 step 3)
+- [ ] VPC quota in the chosen region is sized for one Cloud9 per learner
 
-### Validate one Cloud9 end-to-end
+### Dry-run before delivery
 
-- [ ] On a sample Cloud9: clone the repo, run `bash labs/lab-01/scripts/setup-cloud9.sh smoke`, then `bash tests/smoke.sh smoke` — should return 32/32 pass
-- [ ] **Lab 9 pre-stage:** that same Cloud9's Jenkins is reachable (`curl -sI http://localhost:8081`) — confirms what every learner will land on
+- [ ] On a sample Cloud9 (`m5.large`, Amazon Linux 2023, SSH, role attached): clone the repo, run `bash labs/lab-01/scripts/setup-cloud9.sh smoke`, then `bash tests/smoke.sh smoke` — expect 32/32 pass
+- [ ] Confirms the IAM role + setup script + targets + Jenkins pre-stage all work end-to-end
 - [ ] Have a backup Cloud9 you can hand to a learner whose environment fails irrecoverably
 - [ ] Confirm each learner has a personal email address for Lab 8's SNS subscription
 
