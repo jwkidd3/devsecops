@@ -54,7 +54,7 @@ else
   fi
 fi
 
-TARGET_GB=30   # course needs ~25 GB once all images are pulled
+TARGET_GB=100  # generous headroom for image pulls + Jenkins workspace + scan outputs
 
 # ---------------------------------------------------------------------------
 log "1b   Resize Cloud9 EBS volume to ${TARGET_GB} GB if smaller"

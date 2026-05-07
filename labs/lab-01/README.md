@@ -120,6 +120,6 @@ To browse Juice Shop visually, use Cloud9's **Preview → Preview Running Applic
 | `aws sts get-caller-identity` doesn't show `devsecops-lab-role` | Step 2 incomplete — re-disable managed creds and re-attach the role |
 | `setup-cloud9.sh: Permission denied` | `chmod +x devsecops/labs/lab-01/scripts/setup-cloud9.sh` then re-run |
 | `docker: permission denied` | Open a fresh terminal tab (group membership refresh), or prefix with `sudo` |
-| `no space left on device` during image pulls | EC2 console → your volume → Modify volume → 30 GB; then in terminal: `sudo growpart /dev/nvme0n1 1 && sudo xfs_growfs -d /` |
+| `no space left on device` during image pulls | EC2 console → your volume → Modify volume → 100 GB; then in terminal: `sudo growpart /dev/nvme0n1 1 && sudo xfs_growfs -d /` |
 | Juice Shop returns 502 / no response | Wait 30 sec — Node app takes a moment to start |
 | Anything else | Re-run the setup script — it's idempotent and prints a clear error if a step fails |

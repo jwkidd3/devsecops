@@ -29,7 +29,7 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
       }]
     }
     ```
-  - If you skip the inline policy, learners must manually resize the EBS volume to 30 GB via the EC2 console (Lab 1 default of 10 GB isn't enough)
+  - If you skip the inline policy, learners must manually resize the EBS volume to 100 GB via the EC2 console (Lab 1 default of 10 GB isn't enough)
 - [ ] Course materials repo URL is ready to give learners (`git clone` target for Lab 1 step 3)
 - [ ] VPC quota in the chosen region is sized for one Cloud9 per learner
 
