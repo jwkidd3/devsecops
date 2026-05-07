@@ -54,6 +54,69 @@ else
   fi
 fi
 
+TARGET_GB=30   # course needs ~25 GB once all images are pulled
+
+# ---------------------------------------------------------------------------
+log "1b   Resize Cloud9 EBS volume to ${TARGET_GB} GB if smaller"
+# ---------------------------------------------------------------------------
+# Get current root filesystem size in GB
+current_gb=$(df --output=size -BG / 2>/dev/null | tail -1 | tr -dc '0-9' || echo 0)
+if (( current_gb >= TARGET_GB - 2 )); then   # tolerate ~2 GB FS overhead
+  skip "root volume is already ${current_gb} GB"
+else
+  echo "    root volume is ${current_gb} GB — growing to ${TARGET_GB} GB"
+
+  # IMDSv2 token (Cloud9 EC2 enforces v2)
+  imds_token=$(curl -s --max-time 3 -X PUT http://169.254.169.254/latest/api/token \
+               -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
+  if [[ -z "$imds_token" ]]; then
+    warn "could not get IMDS token; resize skipped (do this manually via EC2 console if needed)"
+  else
+    instance_id=$(curl -s --max-time 3 -H "X-aws-ec2-metadata-token: $imds_token" \
+                  http://169.254.169.254/latest/meta-data/instance-id)
+    volume_id=$(aws ec2 describe-instances --instance-id "$instance_id" \
+                --query "Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId" \
+                --output text 2>/dev/null)
+
+    if [[ -z "$volume_id" || "$volume_id" == "None" ]]; then
+      warn "could not look up volume ID — IAM role probably lacks ec2:DescribeInstances"
+      warn "ask your instructor to grow the volume manually (EC2 → Volumes → Modify volume → ${TARGET_GB})"
+    else
+      if aws ec2 modify-volume --volume-id "$volume_id" --size "$TARGET_GB" >/dev/null 2>&1; then
+        echo "    waiting for resize to start optimizing..."
+        for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
+          state=$(aws ec2 describe-volumes-modifications --volume-id "$volume_id" \
+                  --query "VolumesModifications[0].ModificationState" --output text 2>/dev/null)
+          [[ "$state" == "optimizing" || "$state" == "completed" ]] && break
+          sleep 5
+        done
+
+        # Pick the right block device + grow partition + filesystem
+        root_part=$(findmnt -n -o SOURCE /)
+        root_disk=$(lsblk -no PKNAME "$root_part" 2>/dev/null | head -1)
+        part_num=$(echo "$root_part" | sed -E 's,^.*/[a-zA-Z]+,,')
+
+        if [[ -n "$root_disk" && -n "$part_num" ]]; then
+          sudo growpart "/dev/$root_disk" "$part_num" >/dev/null 2>&1 || true
+          fs_type=$(findmnt -n -o FSTYPE /)
+          if [[ "$fs_type" == "xfs" ]]; then
+            sudo xfs_growfs -d / >/dev/null 2>&1 || true
+          else
+            sudo resize2fs "$root_part" >/dev/null 2>&1 || true
+          fi
+          new_gb=$(df --output=size -BG / 2>/dev/null | tail -1 | tr -dc '0-9' || echo 0)
+          ok "root volume now ${new_gb} GB"
+        else
+          warn "could not detect root device; reboot the EC2 to apply the resize"
+        fi
+      else
+        warn "modify-volume call failed — IAM role probably lacks ec2:ModifyVolume"
+        warn "ask your instructor to grow the volume manually"
+      fi
+    fi
+  fi
+fi
+
 # ---------------------------------------------------------------------------
 log "2/7  Docker + compose plugin"
 # ---------------------------------------------------------------------------

@@ -11,7 +11,25 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 ### Account-level setup (once per cohort)
 
 - [ ] AWS shared training account exists; learners have sign-in credentials
-- [ ] IAM role `devsecops-lab-role` exists (trust: EC2) with managed policies attached: `CloudWatchLogsFullAccess`, `CloudWatchFullAccessV2`, `AmazonSNSFullAccess`
+- [ ] IAM role `devsecops-lab-role` exists (trust: EC2) with:
+  - Managed policies: `CloudWatchLogsFullAccess`, `CloudWatchFullAccessV2`, `AmazonSNSFullAccess`
+  - **Inline policy** for the Lab 1 setup script to auto-resize the Cloud9 EBS volume:
+    ```json
+    {
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Action": [
+          "ec2:DescribeInstances",
+          "ec2:DescribeVolumes",
+          "ec2:DescribeVolumesModifications",
+          "ec2:ModifyVolume"
+        ],
+        "Resource": "*"
+      }]
+    }
+    ```
+  - If you skip the inline policy, learners must manually resize the EBS volume to 30 GB via the EC2 console (Lab 1 default of 10 GB isn't enough)
 - [ ] Course materials repo URL is ready to give learners (`git clone` target for Lab 1 step 3)
 - [ ] VPC quota in the chosen region is sized for one Cloud9 per learner
 
