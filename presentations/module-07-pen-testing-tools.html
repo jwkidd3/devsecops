@@ -165,6 +165,22 @@ msf6 exploit(ms17_010_eternalblue) &gt; run</code></pre>
                 <aside class="notes">This is the "purple-team" use of Metasploit. Far more useful than ad-hoc red-team work.</aside>
             </section>
 
+            <!-- Lab 6 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 6: Metasploit basics</h2>
+                <h3>Run a known exploit against the Metasploitable target</h3>
+                <ul>
+                    <li>Launch <code>msfconsole</code> via the official Docker image on your Cloud9</li>
+                    <li><code>db_nmap</code> the lab Metasploitable host; pick the <code>vsftpd_234_backdoor</code> module</li>
+                    <li>Gain a session, run <code>sysinfo</code> &amp; <code>id</code>, capture evidence</li>
+                    <li>Document module, options, and outcome in the lab report template</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> ~30 minutes &middot; <strong>Pair:</strong> No &middot; <em>happens after lunch</em>
+                </div>
+                <aside class="notes">vsftpd 2.3.4 backdoor is the friendliest module for first-time learners — almost zero options to set. This callout sits between Metasploit and ZAP teaching so the lab preview is fresh in mind when learners return from lunch.</aside>
+            </section>
+
             <!-- Section 2 divider -->
             <section data-background="linear-gradient(135deg, #2f855a 0%, #2b6cb0 100%)" class="section-divider">
                 <h2>Part 2 &mdash; OWASP ZAP</h2>
@@ -255,6 +271,22 @@ docker run --rm -t \
                 <aside class="notes">Auth setup is where most ZAP-in-CI projects get stuck. Plan for it.</aside>
             </section>
 
+            <!-- Lab 7 callout -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Lab 7: OWASP ZAP basics</h2>
+                <h3>Headless baseline + full scan against Juice Shop</h3>
+                <ul>
+                    <li>Run <code>zap-baseline.py</code> via Docker against Juice Shop (~3 min)</li>
+                    <li>Triage the HTML/JSON report; map findings to OWASP Top 10</li>
+                    <li>Run <code>zap-full-scan.py</code> with an 8-min cap; compare High-finding counts to baseline</li>
+                    <li>This is the same one-liner Lab 9's capstone gate uses</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> 45 minutes &middot; <strong>Pair:</strong> No &middot; <em>happens after Lab 6</em>
+                </div>
+                <aside class="notes">Headless ZAP only (Cloud9 has no desktop). The 8-min cap keeps the lab inside its slot. Lab 9 reuses this exact baseline command in the Jenkins pipeline.</aside>
+            </section>
+
             <!-- Strengths and limits -->
             <section>
                 <h2>&#9878;&#65039; What ZAP &amp; Metasploit do <em>not</em> find</h2>
@@ -275,40 +307,6 @@ docker run --rm -t \
                 <div class="key-point"><strong>ZAP</strong> &mdash; the open-source web DAST; passive then active, manual or headless.</div>
                 <div class="key-point"><strong>Tool ceiling:</strong> business logic, chained issues, and design flaws still need humans.</div>
                 <aside class="notes">Two labs back-to-back: Metasploit then ZAP. Recombine in module 9.</aside>
-            </section>
-
-            <!-- Lab 6 callout -->
-            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
-                <h2>&#128295; Lab 6: Metasploit basics</h2>
-                <h3>Run a known exploit against the lab target</h3>
-                <ul>
-                    <li>Launch <code>msfconsole</code> on the attacker workstation</li>
-                    <li><code>db_nmap</code> the lab Metasploitable host into the workspace</li>
-                    <li>Use <code>vsftpd_234_backdoor</code> (or similar safe module) and gain a session</li>
-                    <li>Run <code>sysinfo</code> &amp; <code>id</code>; capture screenshots as evidence</li>
-                    <li>Document module, options, and outcome in the lab report template</li>
-                </ul>
-                <div class="highlight-box">
-                    <strong>Duration:</strong> ~30 minutes &middot; <strong>Pair:</strong> No
-                </div>
-                <aside class="notes">vsftpd 2.3.4 backdoor is the friendliest module for first-time learners — almost zero options to set.</aside>
-            </section>
-
-            <!-- Lab 7 callout -->
-            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
-                <h2>&#128295; Lab 7: OWASP ZAP basics</h2>
-                <h3>Spider, passive-scan, and active-scan Juice Shop</h3>
-                <ul>
-                    <li>Configure browser to proxy through ZAP (<code>localhost:8080</code>)</li>
-                    <li>Browse Juice Shop &mdash; observe passive findings populate</li>
-                    <li>Run the AJAX spider; review the site tree</li>
-                    <li>Active-scan one targeted URL (e.g. the search endpoint)</li>
-                    <li>Export the report; map findings to OWASP Top 10 categories</li>
-                </ul>
-                <div class="highlight-box">
-                    <strong>Duration:</strong> ~30 minutes &middot; <strong>Pair:</strong> No
-                </div>
-                <aside class="notes">Limit active scan to one endpoint — full active scans on Juice Shop can take 20+ minutes and overrun the lab.</aside>
             </section>
 
             <!-- Questions -->
