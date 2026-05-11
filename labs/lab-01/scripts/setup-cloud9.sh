@@ -214,7 +214,7 @@ pull_if_missing() {
 log "4/7  Target images"
 # ---------------------------------------------------------------------------
 pull_if_missing "bkimminich/juice-shop:latest"
-pull_if_missing "tleemcjr/metasploitable2:latest"
+pull_if_missing "strm/metasploitable2:latest"
 
 # ---------------------------------------------------------------------------
 # Helper: ensure a container is running with the given name on the lab network
@@ -274,7 +274,10 @@ ensure_running "$META_NAME" \
     --network "$NETWORK" \
     --network-alias metasploitable \
     --hostname metasploitable \
-    tleemcjr/metasploitable2:latest
+    --privileged --init \
+    --security-opt seccomp=unconfined \
+    --security-opt apparmor=unconfined \
+    strm/metasploitable2:latest
 
 # ---------------------------------------------------------------------------
 log "7/7  Helper tool images"
