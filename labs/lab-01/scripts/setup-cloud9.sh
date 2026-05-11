@@ -284,7 +284,7 @@ if docker inspect "$META_NAME" >/dev/null 2>&1; then
   fi
 fi
 
-ensure_running "$META_NAME" docker run -d --name "$META_NAME" --network "$NETWORK" --network-alias metasploitable --hostname metasploitable --privileged --init --security-opt seccomp=unconfined --security-opt apparmor=unconfined tleemcjr/metasploitable2:latest
+ensure_running "$META_NAME" docker run -dit --name "$META_NAME" --network "$NETWORK" --network-alias metasploitable --hostname metasploitable --privileged --init --security-opt seccomp=unconfined --security-opt apparmor=unconfined tleemcjr/metasploitable2:latest
 
 # ---------------------------------------------------------------------------
 log "7/7  Helper tool images"
