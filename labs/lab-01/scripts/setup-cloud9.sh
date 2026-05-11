@@ -444,13 +444,26 @@ fi
 # ---------------------------------------------------------------------------
 log "Verification & environment notes"
 # ---------------------------------------------------------------------------
-META_IP=$(docker inspect "$META_NAME" \
-  --format "{{ (index .NetworkSettings.Networks \"$NETWORK\").IPAddress }}" 2>/dev/null)
-if [[ -z "$META_IP" || "$META_IP" == "<no value>" ]]; then
-  META_IP=$(docker inspect "$META_NAME" 2>/dev/null \
-            | jq -r '.[0].NetworkSettings.Networks["devsecops-lab"].IPAddress // ""')
+# Poll for up to 45 sec — Metasploitable can take that long to attach to the
+# network and obtain an IP after `docker run`, especially on first boot.
+META_IP=""
+for _ in 1 2 3 4 5 6 7 8 9; do
+  status=$(docker inspect "$META_NAME" --format '{{.State.Status}}' 2>/dev/null)
+  if [[ "$status" == "running" ]]; then
+    META_IP=$(docker inspect "$META_NAME" \
+      --format "{{ (index .NetworkSettings.Networks \"$NETWORK\").IPAddress }}" 2>/dev/null)
+    if [[ -z "$META_IP" || "$META_IP" == "<no value>" ]]; then
+      META_IP=$(docker inspect "$META_NAME" 2>/dev/null \
+                | jq -r '.[0].NetworkSettings.Networks["devsecops-lab"].IPAddress // ""')
+    fi
+    [[ -n "$META_IP" && "$META_IP" != "null" ]] && break
+  fi
+  sleep 5
+done
+if [[ -z "$META_IP" || "$META_IP" == "null" ]]; then
+  META_IP="<unavailable — docker logs $META_NAME>"
+  warn "Metasploitable IP not available after 45s — check: docker logs $META_NAME"
 fi
-META_IP="${META_IP:-<unavailable — restart $META_NAME>}"
 
 cat > "$HOME/devsecops-lab-env.md" <<EOF
 
