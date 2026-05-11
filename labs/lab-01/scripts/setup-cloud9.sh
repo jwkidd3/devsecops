@@ -214,7 +214,7 @@ pull_if_missing() {
 log "4/7  Target images"
 # ---------------------------------------------------------------------------
 pull_if_missing "bkimminich/juice-shop:latest"
-pull_if_missing "strm/metasploitable2:latest"
+pull_if_missing "tleemcjr/metasploitable2:latest"
 
 # ---------------------------------------------------------------------------
 # Helper: ensure a container is running with the given name on the lab network
@@ -269,8 +269,8 @@ if docker inspect "$META_NAME" >/dev/null 2>&1; then
   cur_status=$(docker inspect "$META_NAME" --format '{{.State.Status}}' 2>/dev/null)
   cur_restarts=$(docker inspect "$META_NAME" --format '{{.RestartCount}}' 2>/dev/null || echo 0)
   recreate_meta=0
-  if [[ "$cur_image" != "strm/metasploitable2:latest" ]]; then
-    echo "    drift: using old image '$cur_image' — recreating with strm/metasploitable2"
+  if [[ "$cur_image" != "tleemcjr/metasploitable2:latest" ]]; then
+    echo "    drift: using old image '$cur_image' — recreating with tleemcjr/metasploitable2"
     recreate_meta=1
   elif [[ "$cur_status" == "restarting" ]] || (( cur_restarts > 3 )); then
     echo "    unhealthy: status=$cur_status restarts=$cur_restarts — recreating"
@@ -284,7 +284,7 @@ if docker inspect "$META_NAME" >/dev/null 2>&1; then
   fi
 fi
 
-ensure_running "$META_NAME" docker run -d --name "$META_NAME" --network "$NETWORK" --network-alias metasploitable --hostname metasploitable --privileged --init --security-opt seccomp=unconfined --security-opt apparmor=unconfined strm/metasploitable2:latest
+ensure_running "$META_NAME" docker run -d --name "$META_NAME" --network "$NETWORK" --network-alias metasploitable --hostname metasploitable --privileged --init --security-opt seccomp=unconfined --security-opt apparmor=unconfined tleemcjr/metasploitable2:latest
 
 # ---------------------------------------------------------------------------
 log "7/7  Helper tool images"
