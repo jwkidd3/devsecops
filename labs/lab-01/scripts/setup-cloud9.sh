@@ -178,7 +178,7 @@ else
     if docker compose version >/dev/null 2>&1; then
       ok "docker compose installed"
     else
-      warn "could not install docker compose — Lab 9 will fail until installed manually"
+      warn "could not install docker compose — Lab 10 will fail until installed manually"
     fi
   fi
 fi
@@ -286,7 +286,7 @@ pull_if_missing "jenkins/jenkins:lts-jdk17"
 pull_if_missing "returntocorp/semgrep:latest"
 
 # ---------------------------------------------------------------------------
-log "Lab 9 scaffold (compose file + sample repo)"
+log "Lab 10 scaffold (compose file + sample repo)"
 # ---------------------------------------------------------------------------
 mkdir -p "$LAB9_DIR/jenkins" "$LAB9_DIR/sample-repo"
 
@@ -357,7 +357,7 @@ JENKINSFILE
 ok "Jenkinsfile written"
 
 [[ -f "$LAB9_DIR/sample-repo/README.md" ]] || \
-  echo "# Sample app for DevSecOps Lab 9" > "$LAB9_DIR/sample-repo/README.md"
+  echo "# Sample app for DevSecOps Lab 10" > "$LAB9_DIR/sample-repo/README.md"
 
 # Initialise the sample repo if not already a git repo
 if [[ ! -d "$LAB9_DIR/sample-repo/.git" ]]; then
@@ -442,7 +442,7 @@ cat > "$HOME/devsecops-lab-env.md" <<EOF
 | Metasploitable IP   | ${META_IP}                                  |
 | Jenkins URL         | http://localhost:8081                       |
 | Jenkins admin pwd   | docker exec ds-jenkins cat /var/jenkins_home/secrets/initialAdminPassword |
-| Lab 9 sample repo   | $LAB9_DIR/sample-repo (mounted at /var/sample-repo in Jenkins) |
+| Lab 10 sample repo   | $LAB9_DIR/sample-repo (mounted at /var/sample-repo in Jenkins) |
 
 EOF
 ok "environment notes saved to ~/devsecops-lab-env.md"

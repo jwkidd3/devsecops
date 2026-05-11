@@ -1,6 +1,6 @@
-# Lab 3: Build an Attack Map
-### Threat-modelling a sample three-tier architecture
-**DevSecOps — Module 4 of 9**
+# Lab 3: IaC Scanning with Checkov
+### Catch infrastructure misconfigurations before they ever reach the cloud
+**DevSecOps — Module 3 of 9**
 
 ---
 
@@ -8,163 +8,93 @@
 
 ### Objectives
 
-- Read an architecture brief and identify trust boundaries
-- Draw a Data-Flow Diagram (DFD)
-- Apply STRIDE-per-element to enumerate threats
-- Pick the top three threats and propose mitigations
-- Walk your map for another pair and pen-test their assumptions
+- Run Checkov against a deliberately-vulnerable Terraform file
+- Read findings and map them to the cloud threat classes from Module 3
+- Fix one finding and verify the scan turns green
+- Decide where IaC scanning belongs in the pipeline
 
 ### Prerequisites
 
-- Module 4 completed
-- A diagramming tool — pick whichever is fastest for you. All work in a browser tab alongside Cloud9:
+- Lab 1 complete (Docker working)
 
-| Tool | Best for | Cost |
-|---|---|---|
-| [OWASP Threat Dragon](https://www.threatdragon.com/) | DFDs with built-in STRIDE threat suggestions per element | Free |
-| [draw.io / diagrams.net](https://app.diagrams.net) | Pure DFD drawing; clean export to PNG/PDF | Free |
-| [Miro](https://miro.com) | Real-time multi-person whiteboarding (pair work) | Free tier |
-| [Microsoft Threat Modeling Tool](https://aka.ms/threatmodelingtool) | STRIDE-driven analysis with reporting | Free, Windows only |
-| [pytm](https://github.com/izar/pytm) | Threat-models-as-code (Python) for repeat / CI use | Free |
-| Whiteboard, pen & paper | Fastest for first sessions; snap a photo to upload | — |
-
-If your pair is remote, Miro or Threat Dragon (cloud edition) are the easiest. If you're co-located, a whiteboard beats every tool for the first 30 minutes — you can always digitise after.
-
-> ⏱ **Duration:** ~45 minutes
-> 👥 **Pair:** Yes
+> ⏱ **Duration:** 20 minutes
+> 👥 **Pair:** Optional
 
 ---
 
-## The architecture brief
+## Step 1: Inspect the bad file (3 min)
 
-You're modelling **OrderHub** — a fictional e-commerce checkout for a mid-size retailer.
+The repo includes a Terraform file with at least six security issues:
 
-```
-[Customer browser]
-    │  HTTPS
-    ▼
-[Front Door / WAF]
-    │  HTTPS
-    ▼
-[Web app "checkout-web"]   ◄── reads from ──   [SQL "orders"]
-    │  (private endpoint)
-    ▼
-[App "payments"] ──── HTTPS ────► [Stripe API]
-    │
-    ▼
-[Service Bus] ──► [Function "fulfilment"] ──► [Storage Queue + Blob]
-
-Identity: enterprise IdP for staff admin; customer accounts via consumer IdP (B2C).
-Logging: cloud-native monitoring; CSPM enabled.
+```bash
+cd ~/environment/devsecops/labs/lab-03
+cat bad-iac/main.tf
 ```
 
-### Stated assumptions
-
-- Front Door is the only ingress; both web/payments services have public access disabled.
-- The orders database holds customer name, email, postal address, and an external `customer_id` (no card data stored locally).
-- Staff admins use a separate `/admin` web app behind Conditional Access + MFA.
-
-> 💡 The brief is intentionally cloud-agnostic. Apply your own cloud's primitives (Azure Front Door + App Service, AWS CloudFront + ECS/EKS, etc.) — STRIDE works the same way.
+Read it and spot the problems by eye before scanning. Discuss with your pair what looks wrong.
 
 ---
 
-## Step 1: Draw the DFD (15 min)
+## Step 2: Scan with Checkov (5 min)
 
-Render the brief as a DFD using the five symbols from the module:
-
-- Rectangle = external entity (customer, Stripe)
-- Circle = process (each web/payments/fulfilment service)
-- Two parallel lines = data store (SQL, Storage, Service Bus)
-- Arrow = data flow (with a label)
-- Dashed line = trust boundary
-
-**At minimum, draw four trust boundaries:**
-
-1. Internet ↔ Front Door
-2. Front Door ↔ private network
-3. Customer-facing services ↔ admin app
-4. Internal cloud ↔ Stripe
-
-Save the diagram to `~/environment/devsecops-work/orderhub-dfd.png` (or PDF). If you used a whiteboard, snap a photo and upload it to Cloud9 via the **File → Upload Local Files** menu.
-
----
-
-## Step 2: STRIDE per element (20 min)
-
-Open `~/environment/devsecops-work/orderhub-stride.md` and use this pattern for each element:
-
-```markdown
-## checkout-web (process)
-- **S**poofing: customer session token theft via XSS → impersonation
-- **T**ampering: cart/price tampering on the client → server should re-price
-- **R**epudiation: order placement without auth log → cannot prove who ordered
-- **I**nfo disclosure: stack traces leaked on 500 → mask in prod
-- **D**oS: cart endpoint with no rate limit → resource exhaustion
-- **E**oP: vulnerable npm dep → RCE → owns app context
+```bash
+docker run --rm -t -v "$PWD/bad-iac:/tf" bridgecrew/checkov:latest \
+  --directory /tf --quiet --compact
 ```
 
-**STRIDE-per-element cheat sheet:**
+First run pulls the image (~30 sec); the scan itself is < 5 sec.
 
-| Element type     | S | T | R | I | D | E |
-|------------------|---|---|---|---|---|---|
-| External entity  | ✓ |   | ✓ |   |   |   |
-| Process          | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Data store       |   | ✓ | ✓ | ✓ | ✓ |   |
-| Data flow        |   | ✓ |   | ✓ | ✓ |   |
-
-You don't need a threat in every cell — only where it actually applies. Aim for 8–12 distinct threats across the diagram.
+You'll see a list of **FAILED** checks, each tagged with an ID like `CKV_AWS_24`. Skim them.
 
 ---
 
-## Step 3: Pick the top three (5 min)
+## Step 3: Triage (5 min)
 
-For each top-3 threat:
+For each FAILED check, decide:
 
-| Field | Value |
-|---|---|
-| Threat | (one line) |
-| Element | (which DFD element) |
-| Likelihood | low / med / high |
-| Impact | low / med / high |
-| Mitigation | (1–2 lines, concrete) |
-| Owner | dev / platform / both |
+- Which **Module 3 threat class** does it belong to — Identity, Network, or Data & Secrets?
+- Is the fix safe to apply without breaking a workload that depends on it?
 
-> 🎯 **Tip:** focus on threats whose mitigation could ship within a sprint. Output is a backlog, not a wishlist.
+Capture two or three of the highest-impact findings in `~/environment/devsecops-work/lab-03-triage.md`.
 
 ---
 
-## Step 4: Cross-pair walkthrough (5 min)
+## Step 4: Fix one finding (5 min)
 
-Pair with another team. Take turns:
+Open `bad-iac/main.tf` and make one change — e.g., narrow a `cidr_blocks = ["0.0.0.0/0"]` to your office IP, or set `storage_encrypted = true`. Save.
 
-1. Walk your DFD — what's modelled, what's out of scope.
-2. The other pair plays attacker — they ask "what about X?"
-3. Capture any new threats you missed in `orderhub-stride.md`.
+Re-run the scan:
 
-Common things attackers raise:
-- "What if the WAF is bypassed via the App Service's default URL?"
-- "Are dev/staging slots in scope? They share the back-end."
-- "What's logged when payments hits Stripe and Stripe replies?"
+```bash
+docker run --rm -t -v "$PWD/bad-iac:/tf" bridgecrew/checkov:latest \
+  --directory /tf --quiet --compact
+```
+
+The FAILED count should drop. The corresponding check is now PASSED.
+
+> ✅ **Checkpoint:** you watched a security finding disappear from the report by fixing the source. That's the loop a developer experiences when IaC scanning runs in CI.
 
 ---
 
-## Deliverables
+## Step 5: Reflect (2 min)
 
-By end of lab, your `~/environment/devsecops-work/` directory has:
+In `~/environment/devsecops-work/lab-03-triage.md`, write one sentence answering each:
 
-- `orderhub-dfd.png` (or PDF) — the diagram
-- `orderhub-stride.md` — STRIDE findings with the top-3 expanded
+1. Where in your team's pipeline would this scan live? PR-time? Merge-time? Both?
+2. What's the **cost of a false positive** for an IaC scanner — and how would you tune for that?
 
 ---
 
 ## Cleanup
 
-Nothing to clean up.
+Checkov is stateless. Nothing to clean up.
 
 ---
 
-## Stretch goals (optional)
+## Troubleshooting
 
-- Re-draw the DFD in OWASP Threat Dragon and let it auto-suggest threats per element
-- Map each top-3 threat to one or more **MITRE ATT&CK** techniques
-- Write the **abuse cases** that a tester would use in Lab 5 to validate your top threats
+| Symptom | Fix |
+|---|---|
+| `bridgecrew/checkov: not found` | Confirm Docker is running and you have internet access on the Cloud9 |
+| Scan returns 0 findings | Re-check you scanned `/tf` (the bind-mount), not the host path |
+| `Permission denied` writing triage file | `mkdir -p ~/environment/devsecops-work` |

@@ -1,159 +1,261 @@
-# Lab 9 (Capstone): Jenkins + ZAP DAST stage on Cloud9
-### A security-gated CI pipeline, end-to-end
-**DevSecOps — Module 9 of 9**
+# Lab 9: CloudWatch Detection & Alarm
+### Build a working detection rule end-to-end on AWS CloudWatch
+**DevSecOps — Module 8 of 9**
 
 ---
 
 ## Lab overview
 
-This is the course capstone. You'll wire every previous module's tooling into a single Jenkins pipeline: **Build → SAST → SCA → DAST → Severity gate**.
-
-> ⏱ **Duration:** 30 min hands-on
-> 👥 **Pair:** Optional
+> 💡 The module taught Azure Monitor concepts. Because the lab environment is AWS Cloud9, we apply the **same ideas** with the equivalent AWS services. The mapping:
+>
+> | Azure | AWS |
+> |---|---|
+> | Log Analytics workspace | CloudWatch Logs log group |
+> | KQL | Logs Insights query language |
+> | Log search alert rule | Metric filter → CloudWatch Alarm |
+> | Action group | SNS topic + subscription |
+> | Defender for Cloud (CSPM) | AWS Security Hub / GuardDuty |
 
 ### Objectives
 
-- Connect to the Jenkins instance pre-staged on your Cloud9 by Lab 1's setup script
-- Wire a pipeline against the sample `Jenkinsfile` (already in place at `~/environment/devsecops-work/lab9/sample-repo/`)
-- Run **Build → SAST (Semgrep) → SCA (Trivy) → DAST (ZAP baseline)** stages
-- Watch the Critical-severity gate fail the build, then ship a documented "path to green"
+- Create a CloudWatch log group and a custom log stream
+- Push synthetic sign-in events that mimic Entra/Cognito audit logs
+- Author a Logs Insights query for repeated failed sign-ins
+- Convert the pattern into a metric filter + CloudWatch Alarm
+- Wire the alarm to an SNS topic that emails you
 
 ### Prerequisites
 
-- Lab 1 setup script ran successfully (started Jenkins in the background — it has been warming up since Day 1)
-- `~/devsecops-lab-env.md` lists Jenkins URL and the admin-password command
+- Lab 1 completed; `devsecops-lab-role` is attached and `aws sts get-caller-identity` returns the role
+- Permissions in the role to use CloudWatch Logs, CloudWatch Alarms, and SNS (the instructor pre-attached these)
+- An email address you can receive at
 
-> 💡 **Why this works in 30 min:** Lab 1 pre-pulled all pipeline images, started Jenkins, and scaffolded the `Jenkinsfile`. Plugin install completed hours ago. You're walking into a warm environment.
+> ⏱ **Duration:** 30 min — instructor pre-creates the IAM role; cleanup is post-class
+> 👥 **Pair:** No
+
+> ⏰ **Time-saver:** create the SNS topic and confirm the subscription email **first** (Step 6), so confirmation lands while you're doing Steps 2–5.
 
 ---
 
-## Step 1: Connect to Jenkins (5 min)
+## Step 1: Set environment variables
 
-Open Jenkins via Cloud9 **Preview → Preview Running Application** at port 8081, or via the public URL the instructor provided.
-
-Get the initial admin password:
+In the Cloud9 terminal:
 
 ```bash
-docker exec ds-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+# Use the region your Cloud9 is in (handle both IMDSv1 and IMDSv2)
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+        -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+export AWS_REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+                    http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
+
+# Namespace your resources by your name to avoid collisions in the shared account
+YOU="<your-name>"     # same suffix you used in Lab 1
+LG="/devsecops-lab/$YOU/signin"
+LS="events"
+TOPIC="devsecops-lab-${YOU}-alerts"
+ALARM="repeated-failed-signins-${YOU}"
+EMAIL="<your-email>"
+
+echo "Region: $AWS_REGION  Log group: $LG"
 ```
 
-If this is the first time you've opened Jenkins:
-
-1. Paste the admin password
-2. **Install suggested plugins** (already cached — completes in ~30 sec)
-3. Create your first admin user (use any credentials — this is your Cloud9 only)
-4. Accept the default Jenkins URL → **Start using Jenkins**
-
-If you opened it earlier (some students do during the morning), just log in with the admin user you created.
-
-> ✅ **Checkpoint:** you see the Jenkins dashboard.
+> ✅ **Checkpoint:** all variables are set; `$AWS_REGION` is non-empty.
 
 ---
 
-## Step 2: Verify the sample repo is mounted (1 min)
+## Step 2: Create the log group & stream
 
 ```bash
-docker exec ds-jenkins ls /var/sample-repo
-# Expected: README.md  Jenkinsfile  .git
+aws logs create-log-group --log-group-name "$LG" || echo "(log group exists)"
+aws logs create-log-stream --log-group-name "$LG" --log-stream-name "$LS" || echo "(stream exists)"
+
+aws logs describe-log-groups --log-group-name-prefix "$LG"
 ```
 
-If `.git` is missing, re-run a quick init:
+> ✅ **Checkpoint:** the group is listed.
+
+---
+
+## Step 3: Send sample events
+
+We'll push synthetic JSON events that mimic real sign-in audit logs. The script is included in the lab folder.
+
+Save as `~/environment/devsecops/labs/lab-09/scripts/send-events.sh` (already there if you cloned the materials; otherwise create it):
 
 ```bash
-cd ~/environment/devsecops-work/lab9/sample-repo && \
-  git init -q -b main && \
-  git -c user.email=lab@example.com -c user.name=Lab add . && \
-  git -c user.email=lab@example.com -c user.name=Lab commit -q -m "Re-init"
+#!/usr/bin/env bash
+set -euo pipefail
+LG="${1:?log group name required}"
+LS="${2:?log stream name required}"
+
+emit() {
+  local user="$1" ip="$2" result="$3" location="$4"
+  local ts=$(($(date +%s%N) / 1000000))
+  jq -nc --arg u "$user" --arg ip "$ip" --arg r "$result" --arg loc "$location" --argjson ts $ts '
+    {
+      timestamp: $ts,
+      message: ({
+        UserPrincipalName: $u,
+        IPAddress: $ip,
+        ResultCode: $r,
+        ResultDescription: (if $r == "0" then "Success" else "Invalid username or password" end),
+        Location: $loc,
+        AppDisplayName: "Office365"
+      } | tostring)
+    }
+  '
+}
+
+events=$(
+  {
+    # 7 failures for one user — should trigger
+    for _ in $(seq 1 7); do emit "alex@example.com" "203.0.113.45" "50126" "DE"; done
+    # 3 failures for another — below threshold
+    for _ in $(seq 1 3); do emit "casey@example.com" "198.51.100.7" "50126" "US"; done
+    # one success
+    emit "alex@example.com" "203.0.113.45" "0" "DE"
+  } | jq -s '.'
+)
+
+aws logs put-log-events \
+  --log-group-name "$LG" \
+  --log-stream-name "$LS" \
+  --log-events "$events"
 ```
 
----
-
-## Step 3: Create the pipeline job (3 min)
-
-In Jenkins UI:
-
-1. **New Item** → name `juice-shop-pipeline` → **Pipeline** → OK
-2. Scroll to **Pipeline → Definition: Pipeline script from SCM**
-3. **SCM:** Git
-4. **Repository URL:** `/var/sample-repo`
-5. **Branch Specifier:** `*/main`
-6. **Script Path:** `Jenkinsfile`
-7. **Save**
-
----
-
-## Step 4: First build — observe failure (8–12 min)
-
-Click **Build Now**. Open the build's **Console Output** so you can watch each stage.
-
-Stage progression:
-
-- **Checkout** ✓ — quick
-- **SAST — Semgrep** ✓ — runs against the sample repo
-- **SCA — Trivy** ✓ — quick on a one-file repo
-- **DAST — ZAP baseline** ⏳ — 3–5 min runtime against your Juice Shop
-- **Critical gate** ❌ — **expected to fail** because Juice Shop has High-risk findings
-
-> ✅ **Checkpoint:** the build is RED at the Critical gate stage. Open the **ZAP Baseline** report link from the build page to see the findings.
-
----
-
-## Step 5: Path to green (5–8 min)
-
-You have two valid responses to a CI gate that's blocking:
-
-- **Fix the underlying issue** — ideal, but Juice Shop is intentionally vulnerable, so out of scope here
-- **Adjust the threshold** with a recorded justification — what you'll do now
-
-Edit the Jenkinsfile — set an explicit allowance:
+Run it:
 
 ```bash
-nano ~/environment/devsecops-work/lab9/sample-repo/Jenkinsfile
+chmod +x ~/environment/devsecops/labs/lab-09/scripts/send-events.sh
+~/environment/devsecops/labs/lab-09/scripts/send-events.sh "$LG" "$LS"
 ```
 
-Find the `Critical gate` stage and change the `ALLOWED_HIGH` value to a number that exceeds the High count (the report told you the count). Example:
-
-```groovy
-sh '''HIGH=$(jq '[.site[].alerts[] | select(.riskcode | tonumber >= 3)] | length' zap-baseline.json)
-      ALLOW=${ALLOWED_HIGH:-3}     # was 0; explicit baseline while remediation ships
-      ...
-```
-
-Commit:
-
-```bash
-cd ~/environment/devsecops-work/lab9/sample-repo
-git add Jenkinsfile
-git -c user.email=lab@example.com -c user.name=Lab commit -q \
-    -m "Allow High-finding baseline of 3 while team ships remediation"
-```
-
-Back in Jenkins → **Build Now** again.
-
-> ✅ **Checkpoint:** the second build is GREEN. The path to green is **documented in the commit** — exactly the practice Module 9 prescribed.
+> ✅ **Checkpoint:** the command returns a `nextSequenceToken` (no error).
 
 ---
 
-## Step 6: Reflect (3 min)
+## Step 4: Verify ingestion with Logs Insights
 
-In `~/environment/devsecops-work/lab9-reflection.md`, jot answers to:
+In the AWS console, open **CloudWatch → Logs Insights**. Pick your log group `/devsecops-lab/<you>/signin`.
 
-1. What's the difference between **silencing** the gate and **escaping** it? Which did you do?
-2. If this were a real product, who needs to sign off on the `ALLOWED_HIGH` threshold — and how often do they revisit it?
-3. Which previous module's tools are you most likely to wire into your team's pipeline first?
+Run:
+
+```
+fields @timestamp, @message
+| sort @timestamp desc
+| limit 50
+```
+
+You should see 11 rows (7 + 3 + 1).
 
 ---
 
-## Cleanup (after class)
+## Step 5: Author the detection query
 
-Jenkins keeps running on your Cloud9 instance until you tear it down:
+Same intent as the Azure KQL detection, in Logs Insights syntax:
 
-```bash
-cd ~/environment/devsecops-work/lab9/jenkins
-docker compose down -v
+```
+fields @timestamp, @message
+| parse @message '"UserPrincipalName":"*"' as user
+| parse @message '"ResultCode":"*"'         as resultCode
+| parse @message '"IPAddress":"*"'          as ip
+| filter resultCode != "0"
+| stats count() as failures,
+        count_distinct(ip) as ips
+        by user, bin(5m)
+| filter failures > 5
+| sort @timestamp desc
 ```
 
-Targets stay until you remove them.
+Run it. Only `alex@example.com` should appear.
+
+> ✅ **Checkpoint:** exactly the row(s) you'd want to alert on.
+
+> 💡 Note the parallel: same logical query, different language. Logs Insights uses `filter` / `stats` where KQL uses `where` / `summarize`.
+
+---
+
+## Step 6: Make it an alarm with a metric filter
+
+Logs Insights queries don't fire alarms directly. The CloudWatch pattern is **metric filter → metric → alarm**. Convert:
+
+```bash
+aws logs put-metric-filter \
+  --log-group-name "$LG" \
+  --filter-name "FailedSignins-${YOU}" \
+  --filter-pattern '{ ($.ResultCode != "0") }' \
+  --metric-transformations \
+      metricName="FailedSignins-${YOU}",metricNamespace="DevSecOpsLab",metricValue=1
+```
+
+The filter emits a `1` to CloudWatch Metrics for every log event whose JSON has `ResultCode != "0"`.
+
+Now create the alarm:
+
+```bash
+# Create SNS topic & subscribe your email
+TOPIC_ARN=$(aws sns create-topic --name "$TOPIC" --query TopicArn --output text)
+aws sns subscribe --topic-arn "$TOPIC_ARN" --protocol email --notification-endpoint "$EMAIL"
+echo "Confirm the subscription email AWS just sent before continuing."
+
+aws cloudwatch put-metric-alarm \
+  --alarm-name "$ALARM" \
+  --metric-name "FailedSignins-${YOU}" \
+  --namespace "DevSecOpsLab" \
+  --statistic Sum \
+  --period 60 \
+  --evaluation-periods 5 \
+  --threshold 5 \
+  --comparison-operator GreaterThanThreshold \
+  --treat-missing-data notBreaching \
+  --alarm-actions "$TOPIC_ARN" \
+  --alarm-description "More than 5 failed sign-ins within 5 minutes (lab user $YOU)"
+```
+
+> ⚠️ **Confirm the SNS subscription email** before testing — otherwise no email lands.
+
+---
+
+## Step 7: Trigger the alarm
+
+```bash
+# Repeat the burst a few times to push the metric over threshold within the alarm window
+for i in 1 2 3; do
+  ~/environment/devsecops/labs/lab-09/scripts/send-events.sh "$LG" "$LS"
+  sleep 20
+done
+
+# Watch the alarm state transition
+aws cloudwatch describe-alarms \
+  --alarm-names "$ALARM" \
+  --query 'MetricAlarms[0].{State:StateValue,Reason:StateReason}'
+```
+
+State should move from `INSUFFICIENT_DATA` → `OK` → `ALARM`. Allow 2–5 minutes for the metric to surface (CloudWatch ingestion delay).
+
+> ✅ **Checkpoint:** alarm is in `ALARM` state and an email arrived at the subscribed address.
+
+---
+
+## Step 8: Reflect
+
+In `~/environment/devsecops-work/lab8-reflection.md`, answer:
+
+1. What's the equivalent of Azure Monitor's **action group** in this lab? What did you have to set up that's free in Azure?
+2. What's a sensible threshold for *real* sign-in data — what's the false-positive cost?
+3. What other dimensions would you add (geo, ASN, app) to reduce false positives?
+4. How would you adapt this query for the **impossible-travel** scenario from the module?
+
+---
+
+## Cleanup (do after class — costs are negligible during the day)
+
+```bash
+aws cloudwatch delete-alarms --alarm-names "$ALARM"
+aws logs delete-metric-filter --log-group-name "$LG" --filter-name "FailedSignins-${YOU}"
+aws sns delete-topic --topic-arn "$TOPIC_ARN"
+aws logs delete-log-group --log-group-name "$LG"
+```
 
 ---
 
@@ -161,19 +263,8 @@ Targets stay until you remove them.
 
 | Symptom | Fix |
 |---|---|
-| Cloud9 out of memory | `docker stats` → stop the heaviest containers between attempts |
-| Jenkins not reachable on 8081 | `docker compose -f ~/environment/devsecops-work/lab9/jenkins/docker-compose.yml up -d` |
-| `docker: not found` in pipeline | The setup script runs an apt-get inside Jenkins ~30s after start. If it didn't, run: `docker exec -u root ds-jenkins apt-get install -y docker.io jq` |
-| Pipeline can't clone `/var/sample-repo` | `docker exec ds-jenkins ls /var/sample-repo` should show the Jenkinsfile |
-| `jq: command not found` in the gate stage | Same as above — install jq inside Jenkins |
-| ZAP baseline can't reach `juice-shop` | Confirm the compose file lists the `devsecops-lab` external network |
-| First build gets stuck pulling images | Image pulls happen inside the pipeline container; wait — first run is slow even when host has them cached |
-
----
-
-## Stretch goals (after class)
-
-- Add a **container image scan** stage (`trivy image bkimminich/juice-shop`) before DAST
-- Add a **secrets-scan stage** (`gitleaks detect`) right after Checkout
-- Push the `zap-baseline.json` to your Lab 8 CloudWatch Logs so findings show up alongside the SSH-failure detection
-- Replace the inline shell with a Jenkins **shared library** so multiple repos can reuse the security stages
+| `AccessDenied` on `aws logs ...` | Lab 1 step 2 not complete — re-attach the role; `aws sts get-caller-identity` |
+| Metric never appears | Ingestion lag is normal (1–5 min). Make sure your filter pattern matches: paste a sample event into **CloudWatch → Logs → Test pattern** |
+| Alarm stays `INSUFFICIENT_DATA` | The metric filter only emits when matching events arrive — push more events |
+| No email received | Check the SNS confirmation email; check spam; `aws sns list-subscriptions-by-topic --topic-arn $TOPIC_ARN` should show `Confirmed` |
+| `put-log-events` rejects `nextSequenceToken` | Re-fetch token: `aws logs describe-log-streams --log-group-name $LG --log-stream-name-prefix $LS` |

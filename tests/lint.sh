@@ -130,8 +130,8 @@ done
                                               || bad "lab-01/scripts/setup-cloud9.sh missing or not +x"
 
 # Lab-8 send-events script must exist & be executable
-[[ -x labs/lab-08/scripts/send-events.sh ]] && ok "lab-08/scripts/send-events.sh executable" \
-                                              || bad "lab-08/scripts/send-events.sh missing or not +x"
+[[ -x labs/lab-09/scripts/send-events.sh ]] && ok "lab-09/scripts/send-events.sh executable" \
+                                              || bad "lab-09/scripts/send-events.sh missing or not +x"
 
 # ---------------------------------------------------------------------------
 # Section 4: cross-document consistency
@@ -151,11 +151,11 @@ fi
 
 # README must reference all 9 labs
 missing=()
-for n in 1 2 3 4 5 6 7 8 9; do
+for n in 1 2 3 4 5 6 7 8 9 10; do
   grep -qE "Lab ${n}\b" README.md || missing+=("Lab $n")
 done
 if (( ${#missing[@]} == 0 )); then
-  ok "README references Labs 1-9"
+  ok "README references Labs 1-10"
 else
   bad "README missing lab references: ${missing[*]}"
 fi
@@ -165,11 +165,11 @@ inconsistent=$(grep -lE "devsecops-lab-(student|user1|test)\b" labs/*/README.md 
 [[ -z "$inconsistent" ]] && ok "no hard-coded student names in lab READMEs" \
                           || bad "hard-coded student names: $inconsistent"
 
-# AWS resource namespacing — every `aws ... create-*/put-*` command in Lab 8 must
+# AWS resource namespacing — every `aws ... create-*/put-*` command in Lab 9 must
 # either reference a variable that itself contains $YOU/$\{YOU\}, or be flagged.
 # Approach: check that the variables used in those commands ($LG, $ALARM, $TOPIC,
 # $TOPIC_ARN, $LS) are themselves derived from $YOU.
-lab8="labs/lab-08/README.md"
+lab8="labs/lab-09/README.md"
 defs=$(grep -E '^(LG|LS|TOPIC|ALARM)=' "$lab8" || true)
 unscoped_def=0
 while IFS= read -r line; do
@@ -177,10 +177,10 @@ while IFS= read -r line; do
   [[ "$var" == "LS" ]] && continue   # LS is a child of LG namespace, OK
   if ! grep -qE "^${var}=.*(\\\$YOU|\\\$\\{YOU\\})" "$lab8"; then
     unscoped_def=1
-    bad "Lab 8 var \$$var not derived from \$YOU: $line"
+    bad "Lab 9 var \$$var not derived from \$YOU: $line"
   fi
 done <<< "$defs"
-(( unscoped_def == 0 )) && ok "Lab 8 AWS resources name-scoped by \$YOU (via \$LG, \$TOPIC, \$ALARM)"
+(( unscoped_def == 0 )) && ok "Lab 9 AWS resources name-scoped by \$YOU (via \$LG, \$TOPIC, \$ALARM)"
 
 # Schedule arithmetic: Day 1 + Day 2 should sum to ~660 net minutes
 # Strategy: for each schedule table, sum the numbers in parentheses.
@@ -205,8 +205,8 @@ section "Instructor guide"
 
 inst_errs=()
 grep -q "Pre-class checklist\|pre-class"     INSTRUCTOR.md || inst_errs+=("no pre-class checklist")
-grep -q "Lab 4\|Juice Shop"                   INSTRUCTOR.md || inst_errs+=("no Lab 4 solutions")
-grep -q "Lab 9\|capstone"                     INSTRUCTOR.md || inst_errs+=("no Lab 9 verification")
+grep -q "Lab 5\|Juice Shop"                   INSTRUCTOR.md || inst_errs+=("no Lab 5 solutions")
+grep -q "Lab 10\|capstone"                     INSTRUCTOR.md || inst_errs+=("no Lab 10 verification")
 grep -q "devsecops-lab-role"                  INSTRUCTOR.md || inst_errs+=("no IAM role mention")
 
 if (( ${#inst_errs[@]} == 0 )); then

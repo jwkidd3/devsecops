@@ -38,7 +38,7 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 - [ ] On a sample Cloud9 (`m5.large`, Amazon Linux 2023, SSH, role attached): clone the repo, run `bash labs/lab-01/scripts/setup-cloud9.sh smoke`, then `bash tests/smoke.sh smoke` — expect 32/32 pass
 - [ ] Confirms the IAM role + setup script + targets + Jenkins pre-stage all work end-to-end
 - [ ] Have a backup Cloud9 you can hand to a learner whose environment fails irrecoverably
-- [ ] Confirm each learner has a personal email address for Lab 8's SNS subscription
+- [ ] Confirm each learner has a personal email address for Lab 9's SNS subscription
 
 ---
 
@@ -53,7 +53,7 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 ### Module 2 — Thinking like a hacker (45 min)
 
 - Spend longer on the **Three questions** slide than the kill chain. The mindset is the durable skill.
-- **Lab 2** outputs feed into Lab 5 — encourage learners to keep their recon report open between labs.
+- **Lab 2** outputs feed into Lab 6 — encourage learners to keep their recon report open between labs.
 
 ### Module 3 — App vs Infra threats (45 min, no lab)
 
@@ -68,12 +68,12 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 ### Module 5 — OWASP & upstream (45 min, no lab Day 1)
 
 - Top 10 sub-slides at ~30 sec each. Don't elaborate every category — anchor on A01, A03, A04, A06.
-- Tell learners Lab 4 happens first thing Day 2 — they should sleep on the categories.
+- Tell learners Lab 5 happens first thing Day 2 — they should sleep on the categories.
 
 ### Module 6 — Pen testing (30 min)
 
 - Spend disproportionate time on **Scoping** and **RoE** — these are what makes pen testing professional.
-- Lab 5's RoE is a real document they could adapt for their org.
+- Lab 6's RoE is a real document they could adapt for their org.
 
 ### Module 7 — Metasploit & ZAP (30 min)
 
@@ -87,7 +87,7 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 
 ### Module 9 — Automation (15 min, condensed)
 
-- This is intentionally short to give Lab 9 the time it needs.
+- This is intentionally short to give Lab 10 the time it needs.
 - The **Where each module fits** table doubles as the course recap. Use it to verbally reinforce the through-line before launching the capstone.
 - The capstone closes the course — no formal wrap-up slides. End on the second build going green.
 
@@ -97,7 +97,7 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 
 > Hide this section in any printed handout. These are answer keys.
 
-### Lab 4 — OWASP Juice Shop challenges
+### Lab 5 — OWASP Juice Shop challenges
 
 #### A01: View someone else's basket
 
@@ -146,7 +146,7 @@ Expect ~80–150 HIGH+CRITICAL findings on `bkimminich/juice-shop:latest`. The b
 
 ---
 
-### Lab 5 — expected exploit chains
+### Lab 6 — expected exploit chains
 
 The lab gives learners free choice. Common picks and what to watch for:
 
@@ -161,21 +161,21 @@ The grading question for the cross-pair walkthrough: **could another engineer fi
 
 ---
 
-### Lab 6 — Metasploit gotchas
+### Lab 7 — Metasploit gotchas
 
 - Some learners see "exploit completed, but no session was created" on first run of vsftpd_234_backdoor. **Solution:** re-run. The backdoor is finicky; second attempt works ~95% of the time.
 - If `db_nmap` complains about Postgres, run `msfdb init && msfdb start` inside the container.
 
 ---
 
-### Lab 7 — ZAP gotchas
+### Lab 8 — ZAP gotchas
 
 - ZAP container runs as `zap` user (uid 1000). The bind-mounted `~/environment/devsecops-work/zap` directory must be writable by that uid, hence the `chmod 777` in the README. If learners skipped it, you'll see "permission denied" writing the report.
-- The baseline scan finds Mediums but rarely Highs against Juice Shop. That's fine — Lab 9's gate uses ≥ Medium-equivalent thresholds.
+- The baseline scan finds Mediums but rarely Highs against Juice Shop. That's fine — Lab 10's gate uses ≥ Medium-equivalent thresholds.
 
 ---
 
-### Lab 8 — common alarm-not-firing failures
+### Lab 9 — common alarm-not-firing failures
 
 Diagnostic tree if a learner's alarm stays in `INSUFFICIENT_DATA`:
 
@@ -187,7 +187,7 @@ Diagnostic tree if a learner's alarm stays in `INSUFFICIENT_DATA`:
 
 ---
 
-### Lab 9 — capstone verification
+### Lab 10 — capstone verification
 
 **Before class on Day 2 PM:** spot-check 3 random learners' Cloud9s by SSH or Cloud9 console:
 
@@ -217,10 +217,10 @@ docker exec -u root ds-jenkins apt-get install -y -qq docker.io jq
 
 | Symptom | Where seen | Fix |
 |---|---|---|
-| Learner can't run `aws` commands | Lab 8 | Step 2 of Lab 1 — managed creds still on, or role not attached |
+| Learner can't run `aws` commands | Lab 9 | Step 2 of Lab 1 — managed creds still on, or role not attached |
 | `curl localhost:3000` returns nothing | Any lab | Juice Shop container died — `docker start juice-shop-<name>` or re-run setup script |
 | Cloud9 disk fills | Day 2 afternoon | `docker image prune -a` between labs — frees 3–5 GB |
-| Cloud9 OOM | Lab 9 | Stop the metasploit/ZAP containers between Lab 7 and Lab 9; they're not needed during Lab 9 since Jenkins runs them itself |
+| Cloud9 OOM | Lab 10 | Stop the metasploit/ZAP containers between Lab 8 and Lab 10; they're not needed during Lab 10 since Jenkins runs them itself |
 | Learner deleted their devsecops-lab-env.md | Any lab after 1 | `bash scripts/setup-cloud9.sh <name>` is idempotent; re-creates it |
 | Metasploitable container won't start | Lab 1 | Some Cloud9 kernels reject the image. Backup: instructor pre-builds an alternative target, or learner pairs with another |
 
@@ -229,19 +229,19 @@ docker exec -u root ds-jenkins apt-get install -y -qq docker.io jq
 ## Time-flex levers
 
 If running ahead of schedule:
-- Add 5 min to the Lab 4 retro — discuss which Top 10 categories surprised them
+- Add 5 min to the Lab 5 retro — discuss which Top 10 categories surprised them
 - Add the optional **stretch goal** to any lab (each has them at the bottom)
 
 If running behind:
-- Skip Lab 5 cross-pair walkthrough (already optional)
-- Skip Lab 7 stretch sections (full scan is already moved to stretch)
+- Skip Lab 6 cross-pair walkthrough (already optional)
+- Skip Lab 8 stretch sections (full scan is already moved to stretch)
 - Trim Module 5 sub-slides on A05 / A07 / A09 — they're the lower-leverage Top 10 categories
-- Lab 8 cleanup is post-class — never do it in-band
+- Lab 9 cleanup is post-class — never do it in-band
 
 If a learner falls behind:
 - Pair them with someone ahead — works for Labs 3, 4, 5
 - Hand them the answer key for Labs 4/5 if they're stuck for >10 min — they still benefit from running it
-- For Lab 9, walk them through Steps 1–3 personally; they catch up on the build observation
+- For Lab 10, walk them through Steps 1–3 personally; they catch up on the build observation
 
 ---
 

@@ -79,7 +79,7 @@ if ! docker ps >/dev/null 2>&1; then
 fi
 ok "docker daemon reachable"
 
-# IAM role check — required for Lab 8
+# IAM role check — required for Lab 9
 if aws sts get-caller-identity >/dev/null 2>&1; then
   arn=$(aws sts get-caller-identity --query Arn --output text)
   if [[ "$arn" == *"devsecops-lab-role"* ]]; then
@@ -91,7 +91,7 @@ else
   bad "aws sts get-caller-identity failed — Lab 1 step 2 not complete"
 fi
 
-# Region detection (Lab 8 uses this) — handle IMDSv2 + fall back to IMDSv1
+# Region detection (Lab 9 uses this) — handle IMDSv2 + fall back to IMDSv1
 REGION=""
 IMDS_TOKEN=$(curl -s --max-time 3 -X PUT "http://169.254.169.254/latest/api/token" \
              -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
@@ -171,12 +171,12 @@ check "whois installed"       3 command -v whois
 check "openssl installed"     3 openssl version
 
 # ---------------------------------------------------------------------------
-# Lab 4 — Trivy can scan Juice Shop image
+# Lab 5 — Trivy can scan Juice Shop image
 # ---------------------------------------------------------------------------
-section "Lab 4 — Trivy SCA"
+section "Lab 5 — Trivy SCA"
 
 if (( QUICK )); then
-  skip "Lab 4 Trivy scan (--quick)"
+  skip "Lab 5 Trivy scan (--quick)"
 else
   note "Trivy DB download + scan (~60-90 sec) ..."
   if _timeout 180 docker run --rm \
@@ -196,9 +196,9 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Lab 6 — Metasploit container can talk to target
+# Lab 7 — Metasploit container can talk to target
 # ---------------------------------------------------------------------------
-section "Lab 6 — Metasploit container"
+section "Lab 7 — Metasploit container"
 
 note "msfconsole startup (90-180 sec — Ruby module load is slow) ..."
 # Image's entrypoint is `su-exec msf` and CMD is `./msfconsole` — when we pass
@@ -218,12 +218,12 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Lab 7 — ZAP baseline runs
+# Lab 8 — ZAP baseline runs
 # ---------------------------------------------------------------------------
-section "Lab 7 — ZAP baseline"
+section "Lab 8 — ZAP baseline"
 
 if (( QUICK )); then
-  skip "Lab 7 ZAP baseline (--quick)"
+  skip "Lab 8 ZAP baseline (--quick)"
 else
   note "ZAP baseline against Juice Shop (~3 min) ..."
   WORK=$(mktemp -d)
@@ -246,9 +246,9 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Lab 8 — AWS / CloudWatch round-trip
+# Lab 9 — AWS / CloudWatch round-trip
 # ---------------------------------------------------------------------------
-section "Lab 8 — CloudWatch round-trip"
+section "Lab 9 — CloudWatch round-trip"
 
 LG="/devsecops-lab/${YOU}-smoke/signin"
 LS="events"
@@ -269,7 +269,7 @@ else
 fi
 
 # Push a single event using the helper script
-SEND="$ROOT/labs/lab-08/scripts/send-events.sh"
+SEND="$ROOT/labs/lab-09/scripts/send-events.sh"
 if [[ -x "$SEND" ]]; then
   if bash "$SEND" "$LG" "$LS" >/dev/null 2>&1; then
     ok "send-events.sh published events"
@@ -286,9 +286,9 @@ aws logs delete-log-group --log-group-name "$LG" >/dev/null 2>&1 \
   || skip "CloudWatch cleanup (manual: aws logs delete-log-group --log-group-name $LG)"
 
 # ---------------------------------------------------------------------------
-# Lab 9 — Jenkins pre-stage
+# Lab 10 — Jenkins pre-stage
 # ---------------------------------------------------------------------------
-section "Lab 9 — Jenkins pre-stage"
+section "Lab 10 — Jenkins pre-stage"
 
 check "Jenkins container running"              5 docker ps --filter name=ds-jenkins --filter status=running --quiet
 
@@ -322,7 +322,7 @@ fi
 if (( QUICK )); then
   skip "Jenkins pipeline build (--quick)"
 else
-  skip "Jenkins pipeline build (manual; covered by Lab 9 itself)"
+  skip "Jenkins pipeline build (manual; covered by Lab 10 itself)"
 fi
 
 # ---------------------------------------------------------------------------

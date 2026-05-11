@@ -11,7 +11,7 @@
 - Provision your AWS Cloud9 environment in the shared training account
 - Attach the lab IAM role and verify access
 - Clone the course materials and run the setup script
-- End with both lab targets running and Jenkins pre-staged for Lab 9
+- End with both lab targets running and Jenkins pre-staged for Lab 10
 
 ### Prerequisites
 
@@ -43,7 +43,7 @@ You'll work in the Cloud9 terminal (bottom panel) for every lab.
 
 ## Step 2: Attach the lab IAM role
 
-Cloud9's managed credentials cannot reach the AWS services we need (CloudWatch in Lab 8). The role `devsecops-lab-role` was created during account setup. Disable managed creds and attach the role.
+Cloud9's managed credentials cannot reach the AWS services we need (CloudWatch in Lab 9). The role `devsecops-lab-role` was created during account setup. Disable managed creds and attach the role.
 
 ### Disable Cloud9 managed credentials
 
@@ -83,7 +83,7 @@ The script takes 3–8 minutes on first run. It:
 - Installs `nmap`, `jq`, `git`, `openssl`
 - Pulls every Docker image used in later labs (Juice Shop, Metasploitable, Trivy, Metasploit, ZAP, Jenkins, Semgrep)
 - Starts Juice Shop and Metasploitable on a private Docker network
-- Pre-stages Jenkins for the Lab 9 capstone
+- Pre-stages Jenkins for the Lab 10 capstone
 - Saves your environment notes to `~/devsecops-lab-env.md`
 
 Idempotent — safe to re-run if anything looks wrong.

@@ -147,7 +147,7 @@ Save `~/environment/devsecops-work/recon-report.md`:
 3. ...
 ```
 
-> ✅ **Checkpoint:** the report is saved. You'll re-use it as input for Lab 5.
+> ✅ **Checkpoint:** the report is saved. You'll re-use it as input for Lab 6.
 
 ---
 

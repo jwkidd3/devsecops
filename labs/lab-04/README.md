@@ -1,6 +1,6 @@
-# Lab 4: Exploit & Fix OWASP Top 10
-### Hands-on with three categories on OWASP Juice Shop
-**DevSecOps — Module 5 of 9**
+# Lab 4: Build an Attack Map
+### Threat-modelling a sample three-tier architecture
+**DevSecOps — Module 4 of 9**
 
 ---
 
@@ -8,181 +8,163 @@
 
 ### Objectives
 
-- Find and exploit a **broken access control (A01)** issue
-- Find and exploit an **injection (A03)** issue
-- Run a **software-composition (SCA) scan** to find vulnerable dependencies (A06)
-- Map each finding to its OWASP Top 10 category and propose a fix
+- Read an architecture brief and identify trust boundaries
+- Draw a Data-Flow Diagram (DFD)
+- Apply STRIDE-per-element to enumerate threats
+- Pick the top three threats and propose mitigations
+- Walk your map for another pair and pen-test their assumptions
 
 ### Prerequisites
 
-- Lab 1 complete; Juice Shop running on your Cloud9 instance
+- Module 4 completed
+- A diagramming tool — pick whichever is fastest for you. All work in a browser tab alongside Cloud9:
+
+| Tool | Best for | Cost |
+|---|---|---|
+| [OWASP Threat Dragon](https://www.threatdragon.com/) | DFDs with built-in STRIDE threat suggestions per element | Free |
+| [draw.io / diagrams.net](https://app.diagrams.net) | Pure DFD drawing; clean export to PNG/PDF | Free |
+| [Miro](https://miro.com) | Real-time multi-person whiteboarding (pair work) | Free tier |
+| [Microsoft Threat Modeling Tool](https://aka.ms/threatmodelingtool) | STRIDE-driven analysis with reporting | Free, Windows only |
+| [pytm](https://github.com/izar/pytm) | Threat-models-as-code (Python) for repeat / CI use | Free |
+| Whiteboard, pen & paper | Fastest for first sessions; snap a photo to upload | — |
+
+If your pair is remote, Miro or Threat Dragon (cloud edition) are the easiest. If you're co-located, a whiteboard beats every tool for the first 30 minutes — you can always digitise after.
 
 > ⏱ **Duration:** ~45 minutes
 > 👥 **Pair:** Yes
 
 ---
 
-## Setup
+## The architecture brief
 
-Open Juice Shop in a browser via the Cloud9 preview menu (**Preview → Preview Running Application**) — or use the direct URL the instructor provided.
+You're modelling **OrderHub** — a fictional e-commerce checkout for a mid-size retailer.
 
-Find the score board (it's hidden by design) — open DevTools → look at the bundled JS to discover the path. Once found, bookmark it; it tracks which challenges you've solved.
+```
+[Customer browser]
+    │  HTTPS
+    ▼
+[Front Door / WAF]
+    │  HTTPS
+    ▼
+[Web app "checkout-web"]   ◄── reads from ──   [SQL "orders"]
+    │  (private endpoint)
+    ▼
+[App "payments"] ──── HTTPS ────► [Stripe API]
+    │
+    ▼
+[Service Bus] ──► [Function "fulfilment"] ──► [Storage Queue + Blob]
 
-> 💡 No spoilers below — we'll point you at categories, not solutions.
-
----
-
-## Part 1: Broken access control (A01)
-
-### Challenge: View someone else's basket
-
-Juice Shop assigns each user a basket with a numeric ID. The web UI only ever shows you your own basket. Can you see someone else's?
-
-**Steps:**
-
-1. Register a new user; log in.
-2. Add an item to your basket.
-3. DevTools → Network → reload your basket. Find the API call returning basket contents (look in `/rest/` or `/api/`).
-4. Note the basket ID in the URL or path.
-5. Try changing it. What happens?
-
-### Challenge: Become an admin
-
-Juice Shop has an `/api/Users/` endpoint. Existing users include a customer (`jim@juice-sh.op`) and an admin (`admin@juice-sh.op`).
-
-**Steps:**
-
-1. Look at how the registration request is shaped.
-2. What if you add an extra field — say `role: admin` — to the request body? Use DevTools "edit and resend," or `curl` from the Cloud9 terminal.
-
-### Capture for the report
-
-For each finding:
-- The exact request that worked
-- The response that proved success
-- The OWASP category (A01)
-- A one-line fix
-
----
-
-## Part 2: Injection (A03)
-
-### Challenge: SQL injection on login
-
-The Juice Shop login takes an email and a password. The back-end (deliberately, for training) builds a SQL query by string concatenation.
-
-**Steps:**
-
-1. Open the login form. Try logging in normally — capture the request in DevTools.
-2. Try classic payloads in the email field (`' OR 1=1 --`).
-3. Try logging in as admin without knowing the password.
-
-> ✅ **Checkpoint:** you log in as a user whose password you don't know.
-
-### Challenge: Reflected XSS
-
-Try rendering JavaScript via a search query.
-
-**Steps:**
-
-1. Use the search bar at the top of Juice Shop.
-2. Try simple payloads like `<iframe src="javascript:alert(1)">` (modern browsers may sanitise some — try variants).
-3. When the alert pops, you've demonstrated reflected XSS.
-
-### Capture for the report
-
-- The exact payload that worked
-- A screenshot or pasted response showing impact
-- The OWASP category (A03)
-- A one-line fix (parameterised queries; output encoding)
-
----
-
-## Part 3: Vulnerable dependencies (A06)
-
-We'll point Trivy at the Juice Shop image to find third-party CVEs. Run from the Cloud9 terminal:
-
-```bash
-mkdir -p ~/environment/devsecops-work
-
-# Human-readable summary first
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  aquasec/trivy:latest \
-  image --severity HIGH,CRITICAL bkimminich/juice-shop:latest
-
-# JSON for the report
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $HOME/environment/devsecops-work:/work \
-  aquasec/trivy:latest \
-  image --severity HIGH,CRITICAL \
-        --format json \
-        --output /work/juice-shop-trivy.json \
-        bkimminich/juice-shop:latest
+Identity: enterprise IdP for staff admin; customer accounts via consumer IdP (B2C).
+Logging: cloud-native monitoring; CSPM enabled.
 ```
 
-Inspect the output. Capture:
+### Stated assumptions
 
-- Total HIGH+CRITICAL count
-- Top 3 most-cited packages
-- The OS/distro layer they live in (Alpine? Node base image?)
+- Front Door is the only ingress; both web/payments services have public access disabled.
+- The orders database holds customer name, email, postal address, and an external `customer_id` (no card data stored locally).
+- Staff admins use a separate `/admin` web app behind Conditional Access + MFA.
 
-> 💡 Juice Shop is intentionally vulnerable — expect dozens of findings. The exercise is reading the report, not fixing them all.
+> 💡 The brief is intentionally cloud-agnostic. Apply your own cloud's primitives (Azure Front Door + App Service, AWS CloudFront + ECS/EKS, etc.) — STRIDE works the same way.
 
 ---
 
-## Part 4: Findings report
+## Step 1: Draw the DFD (15 min)
 
-Save `~/environment/devsecops-work/juice-shop-findings.md`:
+Render the brief as a DFD using the five symbols from the module:
+
+- Rectangle = external entity (customer, Stripe)
+- Circle = process (each web/payments/fulfilment service)
+- Two parallel lines = data store (SQL, Storage, Service Bus)
+- Arrow = data flow (with a label)
+- Dashed line = trust boundary
+
+**At minimum, draw four trust boundaries:**
+
+1. Internet ↔ Front Door
+2. Front Door ↔ private network
+3. Customer-facing services ↔ admin app
+4. Internal cloud ↔ Stripe
+
+Save the diagram to `~/environment/devsecops-work/orderhub-dfd.png` (or PDF). If you used a whiteboard, snap a photo and upload it to Cloud9 via the **File → Upload Local Files** menu.
+
+---
+
+## Step 2: STRIDE per element (20 min)
+
+Open `~/environment/devsecops-work/orderhub-stride.md` and use this pattern for each element:
 
 ```markdown
-# Juice Shop findings — DevSecOps Lab 4
-
-**Tester:** <your name>
-**Date:** <today>
-
-## Finding 1 — Broken access control: view another user's basket
-- **Category:** A01:2021 — Broken Access Control
-- **Repro:** GET /rest/basket/<other-id> with my session token
-- **Evidence:** <pasted response>
-- **Fix:** server must verify the basket belongs to the authenticated user
-
-## Finding 2 — SQL injection: login bypass
-- **Category:** A03:2021 — Injection
-- **Repro:** POST /rest/user/login with email = `' OR 1=1 --`
-- **Evidence:** <pasted token / response>
-- **Fix:** parameterised query; bcrypt-compared password
-
-## Finding 3 — Reflected XSS in search
-- **Category:** A03:2021 — Injection
-- **Repro:** /#/search?q=<payload>
-- **Evidence:** screenshot
-- **Fix:** context-aware output encoding; CSP
-
-## Finding 4 — Vulnerable dependencies (A06)
-- HIGH+CRITICAL count: ###
-- Top packages: ...
-- **Fix:** upgrade base image; pin and patch transitive deps; SCA in CI
+## checkout-web (process)
+- **S**poofing: customer session token theft via XSS → impersonation
+- **T**ampering: cart/price tampering on the client → server should re-price
+- **R**epudiation: order placement without auth log → cannot prove who ordered
+- **I**nfo disclosure: stack traces leaked on 500 → mask in prod
+- **D**oS: cart endpoint with no rate limit → resource exhaustion
+- **E**oP: vulnerable npm dep → RCE → owns app context
 ```
 
-> ✅ **Checkpoint:** the report covers at least one finding from each of A01, A03, and A06.
+**STRIDE-per-element cheat sheet:**
+
+| Element type     | S | T | R | I | D | E |
+|------------------|---|---|---|---|---|---|
+| External entity  | ✓ |   | ✓ |   |   |   |
+| Process          | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Data store       |   | ✓ | ✓ | ✓ | ✓ |   |
+| Data flow        |   | ✓ |   | ✓ | ✓ |   |
+
+You don't need a threat in every cell — only where it actually applies. Aim for 8–12 distinct threats across the diagram.
+
+---
+
+## Step 3: Pick the top three (5 min)
+
+For each top-3 threat:
+
+| Field | Value |
+|---|---|
+| Threat | (one line) |
+| Element | (which DFD element) |
+| Likelihood | low / med / high |
+| Impact | low / med / high |
+| Mitigation | (1–2 lines, concrete) |
+| Owner | dev / platform / both |
+
+> 🎯 **Tip:** focus on threats whose mitigation could ship within a sprint. Output is a backlog, not a wishlist.
+
+---
+
+## Step 4: Cross-pair walkthrough (5 min)
+
+Pair with another team. Take turns:
+
+1. Walk your DFD — what's modelled, what's out of scope.
+2. The other pair plays attacker — they ask "what about X?"
+3. Capture any new threats you missed in `orderhub-stride.md`.
+
+Common things attackers raise:
+- "What if the WAF is bypassed via the App Service's default URL?"
+- "Are dev/staging slots in scope? They share the back-end."
+- "What's logged when payments hits Stripe and Stripe replies?"
+
+---
+
+## Deliverables
+
+By end of lab, your `~/environment/devsecops-work/` directory has:
+
+- `orderhub-dfd.png` (or PDF) — the diagram
+- `orderhub-stride.md` — STRIDE findings with the top-3 expanded
 
 ---
 
 ## Cleanup
 
-Nothing to clean up. If you "broke" Juice Shop during exploitation:
-
-```bash
-docker rm -f juice-shop-<your-name>
-bash ~/environment/devsecops/labs/lab-01/scripts/setup-cloud9.sh <your-name>
-```
+Nothing to clean up.
 
 ---
 
 ## Stretch goals (optional)
 
-- Pick **one** vulnerable dependency from Trivy's output and read its CVE description
-- Find a third Top 10 category not covered above (A02 cryptographic failure is fun in Juice Shop)
-- Run the same Trivy scan against a clean `node:20-alpine` image — compare counts
+- Re-draw the DFD in OWASP Threat Dragon and let it auto-suggest threats per element
+- Map each top-3 threat to one or more **MITRE ATT&CK** techniques
+- Write the **abuse cases** that a tester would use in Lab 6 to validate your top threats

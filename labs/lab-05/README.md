@@ -1,6 +1,6 @@
-# Lab 5: Scoped Mini Pen-Test
-### A grey-box engagement against the lab targets — recon to report
-**DevSecOps — Module 6 of 9**
+# Lab 5: Exploit & Fix OWASP Top 10
+### Hands-on with three categories on OWASP Juice Shop
+**DevSecOps — Module 5 of 9**
 
 ---
 
@@ -8,209 +8,181 @@
 
 ### Objectives
 
-- Read and respect a written scope and Rules of Engagement
-- Use recon, vulnerability analysis, and a single exploit step
-- Capture evidence and write a one-page finding using the report template
+- Find and exploit a **broken access control (A01)** issue
+- Find and exploit an **injection (A03)** issue
+- Run a **software-composition (SCA) scan** to find vulnerable dependencies (A06)
+- Map each finding to its OWASP Top 10 category and propose a fix
 
 ### Prerequisites
 
-- Labs 1, 2, 4 completed; targets running on your Cloud9 instance
+- Lab 1 complete; Juice Shop running on your Cloud9 instance
 
 > ⏱ **Duration:** ~45 minutes
 > 👥 **Pair:** Yes
 
 ---
 
-## Your engagement letter
+## Setup
 
-> **Scope and Rules of Engagement — DevSecOps Lab 5**
->
-> **Tester:** *(your pair)*
->
-> **In scope:**
-> - Your own Cloud9 instance: the Metasploitable & Juice Shop containers on the `devsecops-lab` Docker network — *attacker may exploit any service exposed*
->
-> **Out of scope:**
-> - Any **other** student's Cloud9 instance — even on the same shared AWS account
-> - The host EC2 instance (Cloud9 AMI itself)
-> - Any AWS resource outside the lab containers
-> - Denial-of-service techniques
->
-> **Time window:** the duration of this lab session
->
-> **Allowed techniques:** recon (`nmap`, banner grabbing), web fuzzing (within Juice Shop), single-shot exploitation modules from Metasploit
->
-> **Prohibited techniques:** any destructive payload, lateral movement to host or AWS APIs, persistence
->
-> **Stop conditions:** if you cannot recover the lab containers after a step, stop and notify the instructor
->
-> **Authorising signature:** *(instructor signs at start of lab)*
+Open Juice Shop in a browser via the Cloud9 preview menu (**Preview → Preview Running Application**) — or use the direct URL the instructor provided.
 
-Read it. Initial it. **You may not exceed this scope.** Pivoting from the Metasploitable container to the Cloud9 host or to AWS APIs would constitute "out of scope" — do not attempt it.
+Find the score board (it's hidden by design) — open DevTools → look at the bundled JS to discover the path. Once found, bookmark it; it tracks which challenges you've solved.
+
+> 💡 No spoilers below — we'll point you at categories, not solutions.
 
 ---
 
-## Step 1: Pick a target & objective (5 min)
+## Part 1: Broken access control (A01)
 
-Pair, then choose **one** target and **one** objective. Examples:
+### Challenge: View someone else's basket
 
-| Target | Objective |
-|---|---|
-| Metasploitable | Get a remote shell via a known service-level vuln |
-| Metasploitable | Read `/etc/passwd` via a vulnerable web component |
-| Juice Shop | Enumerate all admin emails via the user API |
-| Juice Shop | Demonstrate price tampering on a basket |
+Juice Shop assigns each user a basket with a numeric ID. The web UI only ever shows you your own basket. Can you see someone else's?
 
-Write your choice in `~/environment/devsecops-work/lab5-plan.md`.
+**Steps:**
+
+1. Register a new user; log in.
+2. Add an item to your basket.
+3. DevTools → Network → reload your basket. Find the API call returning basket contents (look in `/rest/` or `/api/`).
+4. Note the basket ID in the URL or path.
+5. Try changing it. What happens?
+
+### Challenge: Become an admin
+
+Juice Shop has an `/api/Users/` endpoint. Existing users include a customer (`jim@juice-sh.op`) and an admin (`admin@juice-sh.op`).
+
+**Steps:**
+
+1. Look at how the registration request is shaped.
+2. What if you add an extra field — say `role: admin` — to the request body? Use DevTools "edit and resend," or `curl` from the Cloud9 terminal.
+
+### Capture for the report
+
+For each finding:
+- The exact request that worked
+- The response that proved success
+- The OWASP category (A01)
+- A one-line fix
 
 ---
 
-## Step 2: Recon (10 min)
+## Part 2: Injection (A03)
 
-Re-use Lab 2 outputs if you have them. Otherwise, from the Cloud9 terminal:
+### Challenge: SQL injection on login
+
+The Juice Shop login takes an email and a password. The back-end (deliberately, for training) builds a SQL query by string concatenation.
+
+**Steps:**
+
+1. Open the login form. Try logging in normally — capture the request in DevTools.
+2. Try classic payloads in the email field (`' OR 1=1 --`).
+3. Try logging in as admin without knowing the password.
+
+> ✅ **Checkpoint:** you log in as a user whose password you don't know.
+
+### Challenge: Reflected XSS
+
+Try rendering JavaScript via a search query.
+
+**Steps:**
+
+1. Use the search bar at the top of Juice Shop.
+2. Try simple payloads like `<iframe src="javascript:alert(1)">` (modern browsers may sanitise some — try variants).
+3. When the alert pops, you've demonstrated reflected XSS.
+
+### Capture for the report
+
+- The exact payload that worked
+- A screenshot or pasted response showing impact
+- The OWASP category (A03)
+- A one-line fix (parameterised queries; output encoding)
+
+---
+
+## Part 3: Vulnerable dependencies (A06)
+
+We'll point Trivy at the Juice Shop image to find third-party CVEs. Run from the Cloud9 terminal:
 
 ```bash
-TARGET_IP=$(grep "Metasploitable IP" ~/devsecops-lab-env.md | awk '{print $NF}')
+mkdir -p ~/environment/devsecops-work
 
-# Service & version sweep
-nmap -Pn -sV -sC -oN ~/environment/devsecops-work/lab5-recon.txt $TARGET_IP
+# Human-readable summary first
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy:latest \
+  image --severity HIGH,CRITICAL bkimminich/juice-shop:latest
 
-# For Juice Shop:
-curl -sI http://localhost:3000
+# JSON for the report
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $HOME/environment/devsecops-work:/work \
+  aquasec/trivy:latest \
+  image --severity HIGH,CRITICAL \
+        --format json \
+        --output /work/juice-shop-trivy.json \
+        bkimminich/juice-shop:latest
 ```
 
-Identify **one** version-fingerprinted service likely vulnerable. Record:
+Inspect the output. Capture:
 
-- Service & version
-- Why you think it's exploitable
-- Your plan in ≤ 5 bullets
+- Total HIGH+CRITICAL count
+- Top 3 most-cited packages
+- The OS/distro layer they live in (Alpine? Node base image?)
+
+> 💡 Juice Shop is intentionally vulnerable — expect dozens of findings. The exercise is reading the report, not fixing them all.
 
 ---
 
-## Step 3: Vulnerability analysis (10 min)
+## Part 4: Findings report
 
-Without exploiting yet, look up the vulnerability.
-
-For Metasploitable services, search Metasploit:
-
-```bash
-docker run --rm -it \
-  --network devsecops-lab \
-  metasploitframework/metasploit-framework:latest \
-  ./msfconsole -q -x "search type:exploit name:vsftpd; exit"
-```
-
-For Juice Shop, look at the OWASP Top 10 categories you covered in Lab 4.
-
-Read the public CVE / Exploit-DB description — understand *what* the exploit does *before* running it.
-
-> ⚠️ Re-read scope before exploiting. If your plan strays, narrow it.
-
----
-
-## Step 4: Exploit — *one* step (10 min)
-
-Run **one** carefully chosen exploit. Capture:
-
-- The exact command(s)
-- The payload / request body
-- The response that proves it worked
-
-Example for Metasploitable, FTP backdoor (using the Metasploit container):
-
-```bash
-docker run --rm -it \
-  --network devsecops-lab \
-  metasploitframework/metasploit-framework:latest \
-  ./msfconsole -q -x "
-    use exploit/unix/ftp/vsftpd_234_backdoor;
-    set RHOSTS metasploitable;
-    run;
-  "
-```
-
-Or for Juice Shop, a user enumeration:
-
-```bash
-curl -s http://localhost:3000/api/Users | jq '.data[].email' | head
-```
-
-> ✅ **Checkpoint:** you have one concrete piece of evidence that proves the issue.
-
----
-
-## Step 5: Stop. Don't pivot. (1 min)
-
-You proved impact. **Stop here.** Do not:
-
-- Run additional modules "for fun"
-- Move laterally to the Cloud9 host or other students' instances
-- Touch AWS APIs
-
-Close any sessions you opened (`exit` from a shell, kill the Metasploit container).
-
-This is the most important habit of a professional pen tester.
-
----
-
-## Step 6: Write a one-page finding (10 min)
-
-Save `~/environment/devsecops-work/lab5-finding.md`:
+Save `~/environment/devsecops-work/juice-shop-findings.md`:
 
 ```markdown
-# Finding — <short title>
+# Juice Shop findings — DevSecOps Lab 5
 
-**Engagement:** DevSecOps Lab 5
-**Tester:** <pair>
+**Tester:** <your name>
 **Date:** <today>
-**Severity:** Critical | High | Medium | Low (pick one + justify)
-**OWASP / CVE:** A01 / A03 / CVE-XXXX-YYYY
-**Target:** <hostname & port or URL>
 
-## Summary
-One sentence. What can the attacker do, and why does it matter?
+## Finding 1 — Broken access control: view another user's basket
+- **Category:** A01:2021 — Broken Access Control
+- **Repro:** GET /rest/basket/<other-id> with my session token
+- **Evidence:** <pasted response>
+- **Fix:** server must verify the basket belongs to the authenticated user
 
-## Reproduction steps
-1. ...
-2. ...
-3. ...
+## Finding 2 — SQL injection: login bypass
+- **Category:** A03:2021 — Injection
+- **Repro:** POST /rest/user/login with email = `' OR 1=1 --`
+- **Evidence:** <pasted token / response>
+- **Fix:** parameterised query; bcrypt-compared password
 
-## Evidence
-\`\`\`
-<paste the screenshot or terminal output that proves it>
-\`\`\`
+## Finding 3 — Reflected XSS in search
+- **Category:** A03:2021 — Injection
+- **Repro:** /#/search?q=<payload>
+- **Evidence:** screenshot
+- **Fix:** context-aware output encoding; CSP
 
-## Recommended fix
-- Concrete change in code/config
-- Tooling that would catch this earlier (SAST? SCA? Auth tests?)
-
-## Out-of-scope notes
-Things you saw but did not test, per RoE.
+## Finding 4 — Vulnerable dependencies (A06)
+- HIGH+CRITICAL count: ###
+- Top packages: ...
+- **Fix:** upgrade base image; pin and patch transitive deps; SCA in CI
 ```
 
-> ✅ **Checkpoint:** the finding is reproducible by another engineer using only your write-up.
-
----
-
-## Step 7: Cross-pair walkthrough (optional, 5 min)
-
-Pair with another team. Each tester walks the other through their finding aloud. Other team plays the developer asking "What do I actually change?"
-
-If the answer is fuzzy, sharpen the **Recommended fix** section.
+> ✅ **Checkpoint:** the report covers at least one finding from each of A01, A03, and A06.
 
 ---
 
 ## Cleanup
 
-Targets stay running.
+Nothing to clean up. If you "broke" Juice Shop during exploitation:
+
+```bash
+docker rm -f juice-shop-<your-name>
+bash ~/environment/devsecops/labs/lab-01/scripts/setup-cloud9.sh <your-name>
+```
 
 ---
 
-## Common mistakes
+## Stretch goals (optional)
 
-| Mistake | Why it matters |
-|---|---|
-| "I'll just try one more module" | Out of scope unless your RoE says yes |
-| Touching AWS APIs from inside the exploit | Way out of scope — could affect the shared account |
-| Running the same exploit dozens of times | Filling logs, causing instability — bad form |
-| Skipping the report | Your output **is** the report; the exploit is just a step |
+- Pick **one** vulnerable dependency from Trivy's output and read its CVE description
+- Find a third Top 10 category not covered above (A02 cryptographic failure is fun in Juice Shop)
+- Run the same Trivy scan against a clean `node:20-alpine` image — compare counts

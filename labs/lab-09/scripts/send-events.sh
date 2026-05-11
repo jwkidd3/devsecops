@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DevSecOps Lab 8 — push synthetic sign-in events to CloudWatch Logs
+# DevSecOps Lab 9 — push synthetic sign-in events to CloudWatch Logs
 # Usage: send-events.sh <log-group> <log-stream>
 
 set -euo pipefail
