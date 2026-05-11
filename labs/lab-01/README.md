@@ -97,7 +97,7 @@ Idempotent — safe to re-run if anything looks wrong.
 curl -sI http://localhost:3000 | head -1                        # → HTTP/1.1 200 OK
 
 # Metasploitable is reachable
-META_IP=$(grep "Metasploitable IP" ~/devsecops-lab-env.md | awk '{print $NF}')
+META_IP=$(awk -F'|' '/Metasploitable IP/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}' ~/devsecops-lab-env.md)
 nmap -Pn -p 21,22,80 $META_IP                                   # → ports 21, 22, 80 open
 ```
 

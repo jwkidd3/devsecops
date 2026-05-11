@@ -75,7 +75,7 @@ In a browser:
 
 ```bash
 # Load it as an env var for convenience
-TARGET_IP=$(grep "Metasploitable IP" ~/devsecops-lab-env.md | awk '{print $NF}')
+TARGET_IP=$(awk -F'|' '/Metasploitable IP/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}' ~/devsecops-lab-env.md)
 echo "Target: $TARGET_IP"
 
 # Quick top-100 ports
