@@ -16,7 +16,7 @@
 
 - Lab 1 completed; Juice Shop on the `devsecops-lab` network
 
-> ⏱ **Duration:** 30 min — baseline ~3 min runtime, the rest is triage
+> ⏱ **Duration:** 45 min — baseline (~3 min) + triage + full scan (~8 min)
 > 👥 **Pair:** No
 
 > 💡 Cloud9 has no desktop, so we run the **headless** ZAP container — the same approach Lab 9 will use in CI.
@@ -84,15 +84,7 @@ In `~/environment/devsecops-work/zap/lab7-triage.md`, answer:
 
 ---
 
-## Cleanup
-
-ZAP runs with `--rm`, so containers self-clean. Reports stay in `~/environment/devsecops-work/zap/`.
-
----
-
-## Stretch goals (after class)
-
-### Full scan (passive + active) — 10–15 min runtime
+## Step 4: Full scan (passive + active) — required
 
 > ⚠️ Active scans send attack traffic. Scoped only to your own Juice Shop on the lab network.
 
@@ -105,16 +97,34 @@ docker run --rm -t \
     -t http://juice-shop:3000 \
     -r lab7-full.html \
     -J lab7-full.json \
-    -I -T 10
+    -I -T 8
 ```
 
-`-T 10` time-bounds the scan to 10 minutes.
+`-T 8` time-bounds the scan to 8 minutes — enough to surface new High-severity findings that the baseline missed (Reflected XSS, SQLi, etc.). While it runs, finish Step 3's triage.
 
-In a real CI pipeline you'd run baseline on every PR and the full scan nightly against staging — we wire this in Lab 9.
+Compare the two reports:
+
+```bash
+jq '[.site[].alerts[] | select(.riskcode | tonumber >= 3)] | length' \
+   ~/environment/devsecops-work/zap/lab7-baseline.json \
+   ~/environment/devsecops-work/zap/lab7-full.json
+```
+
+Expect the full-scan count to be higher. This is the same one-liner Lab 9's pipeline gate uses.
+
+---
+
+## Cleanup
+
+ZAP runs with `--rm`, so containers self-clean. Reports stay in `~/environment/devsecops-work/zap/`.
+
+---
+
+## Stretch (after class)
 
 ### Auth-aware scanning
 
-Most app risk lives behind login. Drop a session cookie / bearer token into a context file and re-run the baseline against the authenticated site tree (see ZAP docs).
+Most app risk lives behind login. Drop a session cookie / bearer token into a context file and re-run the scan against the authenticated site tree (see ZAP docs).
 
 ---
 

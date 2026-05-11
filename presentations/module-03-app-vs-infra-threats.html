@@ -247,7 +247,23 @@
                 <div class="key-point"><strong>Two layers:</strong> application threats live in your code &amp; deps; infrastructure threats live in your platform &amp; config.</div>
                 <div class="key-point"><strong>Cloud twist:</strong> shared responsibility, identity-as-perimeter, control plane is on the internet.</div>
                 <div class="key-point"><strong>Place the control where it can be reasoned about</strong> &mdash; not where it's most convenient to add.</div>
-                <aside class="notes">Module 4 next — turn these abstract layers into concrete attack maps.</aside>
+                <aside class="notes">Hand off to the hands-on — catching infra threats at IaC time.</aside>
+            </section>
+
+            <!-- Module 3 hands-on -->
+            <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" data-background-color="#1a365d" class="lab-callout">
+                <h2>&#128295; Module 3 Hands-on: IaC scan with Checkov</h2>
+                <h3>Catch infrastructure misconfigurations before they ever reach AWS</h3>
+                <ul>
+                    <li>Inspect a deliberately-bad Terraform file (wide-open SG, public S3, hard-coded password)</li>
+                    <li>Run <code>checkov</code> via Docker against it &mdash; ~5 sec scan</li>
+                    <li>Map each FAILED check to one of: <strong>Identity</strong> &middot; <strong>Network</strong> &middot; <strong>Data &amp; Secrets</strong></li>
+                    <li>Fix one finding; watch it turn from FAILED &rarr; PASSED</li>
+                </ul>
+                <div class="highlight-box">
+                    <strong>Duration:</strong> 20 minutes &middot; <strong>Pair:</strong> optional
+                </div>
+                <aside class="notes">Walk learners to labs/lab-iac/. Image pull is ~30 sec; emphasize this would run on every PR in a real pipeline.</aside>
             </section>
 
             <!-- Questions -->

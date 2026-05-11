@@ -24,7 +24,8 @@ Net working time: **5.5 hrs/day = 11 hrs total**.
 | 10:30 – 10:45 | Break |
 | 10:45 – 12:00 | **Module 2** *Thinking like a hacker* (45) + **Lab 2** recon (30) |
 | 12:00 – 1:00 | **Lunch** |
-| 1:00 – 1:45 | **Module 3** *App vs Infrastructure threats* (45 — no lab) |
+| 1:00 – 1:25 | **Module 3** *App vs Infrastructure threats* (25) |
+| 1:25 – 1:45 | **Module 3 hands-on** — IaC scan with Checkov (20) |
 | 1:45 – 3:00 | **Module 4** *Threat maps & STRIDE* (30) + **Lab 3** attack map (45) |
 | 3:00 – 3:15 | Break |
 | 3:15 – 4:00 | **Module 5** *OWASP & upstream detection* (45 — Lab 4 starts Day 2) |
@@ -41,14 +42,13 @@ Net working time: **5.5 hrs/day = 11 hrs total**.
 | 11:30 – 12:00 | **Module 7** *Metasploit & ZAP* (30) |
 | 12:00 – 1:00 | **Lunch** |
 | 1:00 – 1:30 | **Lab 6** Metasploit (30) |
-| 1:30 – 2:00 | **Lab 7** ZAP baseline (30) |
-| 2:00 – 2:30 | **Module 8** *Monitoring (Azure concepts → CloudWatch)* (30) |
-| 2:30 – 2:45 | Break |
-| 2:45 – 3:15 | **Lab 8** CloudWatch detection & alarm (30) |
-| 3:15 – 3:30 | **Module 9** *Automation & Jenkins* — condensed (15) |
-| 3:30 – 4:00 | **Lab 9** capstone — Jenkins + ZAP DAST gate, hands-on (30) |
+| 1:30 – 2:15 | **Lab 7** ZAP baseline + full scan (45) |
+| 2:15 – 2:45 | **Module 8** *Monitoring (Azure → CloudWatch)* (30) |
+| 2:45 – 3:00 | Break |
+| 3:00 – 3:30 | **Lab 8** CloudWatch detection & alarm (30) |
+| 3:30 – 4:00 | **Lab 9** capstone — Jenkins + ZAP DAST gate (30) |
 
-> 💡 **The capstone closes the course.** Lab 9 is hands-on because Jenkins is pre-staged: the Lab 1 setup script started Jenkins on each Cloud9 in the background, so by Day 2 afternoon plugins are installed and the Jenkinsfile is scaffolded. Learners walk into a warm environment and ship their first security-gated pipeline run.
+> 💡 **The capstone closes the course.** Lab 9 is hands-on because Jenkins is pre-staged: the Lab 1 setup script started Jenkins on each Cloud9 in the background, so by Day 2 afternoon plugins are installed and the Jenkinsfile is scaffolded. Module 9's content is delivered as a brief verbal intro at Lab 9 start — no separate teaching slot.
 
 ## Repository layout
 
