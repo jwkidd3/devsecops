@@ -257,13 +257,7 @@ free_port_if_held_by_stale() {
 log "5/7  Juice Shop ($JUICE_NAME)"
 # ---------------------------------------------------------------------------
 free_port_if_held_by_stale 3000 "juice-shop-" "$JUICE_NAME"
-ensure_running "$JUICE_NAME" \
-  docker run -d \
-    --name "$JUICE_NAME" \
-    --network "$NETWORK" \
-    --network-alias juice-shop \
-    -p 3000:3000 \
-    bkimminich/juice-shop:latest
+ensure_running "$JUICE_NAME" docker run -d --name "$JUICE_NAME" --network "$NETWORK" --network-alias juice-shop -p 3000:3000 bkimminich/juice-shop:latest
 
 # ---------------------------------------------------------------------------
 log "6/7  Metasploitable ($META_NAME)"
@@ -290,16 +284,7 @@ if docker inspect "$META_NAME" >/dev/null 2>&1; then
   fi
 fi
 
-ensure_running "$META_NAME" \
-  docker run -d \
-    --name "$META_NAME" \
-    --network "$NETWORK" \
-    --network-alias metasploitable \
-    --hostname metasploitable \
-    --privileged --init \
-    --security-opt seccomp=unconfined \
-    --security-opt apparmor=unconfined \
-    strm/metasploitable2:latest
+ensure_running "$META_NAME" docker run -d --name "$META_NAME" --network "$NETWORK" --network-alias metasploitable --hostname metasploitable --privileged --init --security-opt seccomp=unconfined --security-opt apparmor=unconfined strm/metasploitable2:latest
 
 # ---------------------------------------------------------------------------
 log "7/7  Helper tool images"
