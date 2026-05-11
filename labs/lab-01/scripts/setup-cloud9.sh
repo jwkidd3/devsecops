@@ -268,6 +268,28 @@ ensure_running "$JUICE_NAME" \
 # ---------------------------------------------------------------------------
 log "6/7  Metasploitable ($META_NAME)"
 # ---------------------------------------------------------------------------
+# Detect drift: old image (tleemcjr crashes on AL2023) or restart loop.
+# If detected, force-recreate so ensure_running picks up the new image + flags.
+if docker inspect "$META_NAME" >/dev/null 2>&1; then
+  cur_image=$(docker inspect "$META_NAME" --format '{{.Config.Image}}' 2>/dev/null)
+  cur_status=$(docker inspect "$META_NAME" --format '{{.State.Status}}' 2>/dev/null)
+  cur_restarts=$(docker inspect "$META_NAME" --format '{{.RestartCount}}' 2>/dev/null || echo 0)
+  recreate_meta=0
+  if [[ "$cur_image" != "strm/metasploitable2:latest" ]]; then
+    echo "    drift: using old image '$cur_image' — recreating with strm/metasploitable2"
+    recreate_meta=1
+  elif [[ "$cur_status" == "restarting" ]] || (( cur_restarts > 3 )); then
+    echo "    unhealthy: status=$cur_status restarts=$cur_restarts — recreating"
+    recreate_meta=1
+  elif [[ "$cur_status" == "exited" ]]; then
+    echo "    container exited — recreating"
+    recreate_meta=1
+  fi
+  if (( recreate_meta )); then
+    docker rm -f "$META_NAME" >/dev/null 2>&1 || true
+  fi
+fi
+
 ensure_running "$META_NAME" \
   docker run -d \
     --name "$META_NAME" \
