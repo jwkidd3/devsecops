@@ -97,21 +97,17 @@ done
 # ---------------------------------------------------------------------------
 # Section 3: labs
 # ---------------------------------------------------------------------------
-section "Labs (1–9)"
+section "Labs"
 
-for n in 01 02 03 04 05 06 07 08 09; do
-  dir="labs/lab-$n"
-  if [[ ! -d "$dir" ]]; then
-    bad "$dir missing"
-    continue
-  fi
+for dir in labs/lab-*; do
+  name=$(basename "$dir")
   if [[ ! -f "$dir/README.md" ]]; then
     bad "$dir/README.md missing"
     continue
   fi
 
   errs=()
-  grep -q "^# Lab"                      "$dir/README.md" || errs+=("no top-level title")
+  grep -qE "^# (Lab|Module)"            "$dir/README.md" || errs+=("no top-level title")
   grep -q "^## Lab overview\|^## Format" "$dir/README.md" || errs+=("no Lab overview section")
   grep -q "Objectives"                  "$dir/README.md" || errs+=("no Objectives")
   grep -qE "^>\s*(⏱|⏰)|Duration"       "$dir/README.md" || errs+=("no Duration line")
@@ -123,9 +119,9 @@ for n in 01 02 03 04 05 06 07 08 09; do
   fi
 
   if (( ${#errs[@]} == 0 )); then
-    ok "lab-$n/README.md structure"
+    ok "$name/README.md structure"
   else
-    bad "lab-$n/README.md — ${errs[*]}"
+    bad "$name/README.md — ${errs[*]}"
   fi
 done
 
