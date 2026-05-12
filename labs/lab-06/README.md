@@ -73,7 +73,7 @@ Re-use Lab 2 outputs if you have them. Otherwise, from the Cloud9 terminal:
 TARGET_IP=$(awk -F'|' '/Metasploitable IP/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}' ~/devsecops-lab-env.md)
 
 # Service & version sweep
-nmap -Pn -sV -sC -oN ~/environment/devsecops-work/lab5-recon.txt $TARGET_IP
+nmap -Pn -sV -sC -p 21,22,23,25,80,139,445,3306,5900 -oN ~/environment/devsecops-work/lab5-recon.txt $TARGET_IP
 
 # For Juice Shop:
 curl -sI http://localhost:8080
