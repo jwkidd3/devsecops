@@ -452,14 +452,22 @@ elif docker ps --filter name=^ds-jenkins$ --filter status=running --quiet | grep
     docker exec ds-jenkins true >/dev/null 2>&1 && break
     sleep 10
   done
+  install_log=/tmp/jenkins-apt-$$.log
   if docker exec -u root ds-jenkins bash -c '
        apt-get update -qq && \
-       apt-get install -y -qq --no-install-recommends docker.io jq && \
+       apt-get install -y --no-install-recommends docker.io jq && \
        apt-get clean
-     ' >/dev/null 2>&1; then
-    ok "installed jq + docker.io inside Jenkins"
+     ' >"$install_log" 2>&1; then
+    # Sanity-check the binaries actually landed
+    if docker exec ds-jenkins which docker >/dev/null 2>&1 \
+       && docker exec ds-jenkins which jq >/dev/null 2>&1; then
+      ok "installed jq + docker.io inside Jenkins"
+    else
+      warn "apt-get reported success but docker/jq not found — check $install_log"
+    fi
   else
-    warn "could not install jq+docker inside Jenkins (re-run setup later)"
+    warn "apt-get inside Jenkins failed — see $install_log"
+    tail -10 "$install_log" | sed 's/^/     /'
   fi
 fi
 
