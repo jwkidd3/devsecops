@@ -100,11 +100,11 @@ Capture: open ports, service banners, software versions.
 
 ```bash
 # HTTP response headers
-curl -sI http://localhost:3000 | tee ~/environment/devsecops-work/juice-shop-headers.txt
+curl -sI http://localhost:8080 | tee ~/environment/devsecops-work/juice-shop-headers.txt
 
 # Robots / common files
-curl -s  http://localhost:3000/robots.txt
-curl -sI http://localhost:3000/ftp
+curl -s  http://localhost:8080/robots.txt
+curl -sI http://localhost:8080/ftp
 ```
 
 Open Juice Shop via Cloud9 preview (or the URL the instructor provided). Open browser DevTools → Network → reload. Capture:
@@ -164,4 +164,4 @@ Nothing to clean up — targets stay running.
 | `nmap: command not found` | Re-run the Lab 1 setup script |
 | `dig` returns nothing | Try `getent hosts example.com` |
 | `crt.sh` slow | Use <https://search.censys.io> instead |
-| `nmap` against `localhost:3000` is empty | Use the **container** IP or hostname `juice-shop` from inside docker-network |
+| `nmap` against `localhost:8080` is empty | Use the **container** IP or hostname `juice-shop` from inside docker-network |

@@ -104,7 +104,7 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 The endpoint is `GET /rest/basket/<id>`. After login, the user's session token grants access to the basket whose `id` is in the JWT — *but the server doesn't verify ownership when the path id changes*. Steps that work:
 
 1. Log in as your registered user, capture the `Authorization: Bearer <jwt>` header in DevTools.
-2. `curl -H "Authorization: Bearer <jwt>" http://localhost:3000/rest/basket/1` returns admin's basket.
+2. `curl -H "Authorization: Bearer <jwt>" http://localhost:8080/rest/basket/1` returns admin's basket.
 
 **Fix:** server-side ownership check on `BasketId` against the authenticated user.
 
@@ -113,7 +113,7 @@ The endpoint is `GET /rest/basket/<id>`. After login, the user's session token g
 Registration POST body normally is `{"email": ..., "password": ..., "passwordRepeat": ...}`. The Sequelize model accepts an extra `role` field. Send:
 
 ```bash
-curl -X POST http://localhost:3000/api/Users/ \
+curl -X POST http://localhost:8080/api/Users/ \
   -H "Content-Type: application/json" \
   -d '{"email":"x@x.com","password":"x","passwordRepeat":"x","role":"admin"}'
 ```
@@ -218,7 +218,7 @@ docker exec -u root ds-jenkins apt-get install -y -qq docker.io jq
 | Symptom | Where seen | Fix |
 |---|---|---|
 | Learner can't run `aws` commands | Lab 9 | Step 2 of Lab 1 — managed creds still on, or role not attached |
-| `curl localhost:3000` returns nothing | Any lab | Juice Shop container died — `docker start juice-shop-<name>` or re-run setup script |
+| `curl localhost:8080` returns nothing | Any lab | Juice Shop container died — `docker start juice-shop-<name>` or re-run setup script |
 | Cloud9 disk fills | Day 2 afternoon | `docker image prune -a` between labs — frees 3–5 GB |
 | Cloud9 OOM | Lab 10 | Stop the metasploit/ZAP containers between Lab 8 and Lab 10; they're not needed during Lab 10 since Jenkins runs them itself |
 | Learner deleted their devsecops-lab-env.md | Any lab after 1 | `bash scripts/setup-cloud9.sh <name>` is idempotent; re-creates it |

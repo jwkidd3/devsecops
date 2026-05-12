@@ -94,7 +94,7 @@ Idempotent — safe to re-run if anything looks wrong.
 
 ```bash
 # Juice Shop responds
-curl -sI http://localhost:3000 | head -1                        # → HTTP/1.1 200 OK
+curl -sI http://localhost:8080 | head -1                        # → HTTP/1.1 200 OK
 
 # Metasploitable is reachable
 META_IP=$(awk -F'|' '/Metasploitable IP/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}' ~/devsecops-lab-env.md)

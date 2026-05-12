@@ -257,7 +257,7 @@ free_port_if_held_by_stale() {
 log "5/7  Juice Shop ($JUICE_NAME)"
 # ---------------------------------------------------------------------------
 free_port_if_held_by_stale 3000 "juice-shop-" "$JUICE_NAME"
-ensure_running "$JUICE_NAME" docker run -d --name "$JUICE_NAME" --network "$NETWORK" --network-alias juice-shop -p 3000:3000 bkimminich/juice-shop:latest
+ensure_running "$JUICE_NAME" docker run -d --name "$JUICE_NAME" --network "$NETWORK" --network-alias juice-shop -p 8080:3000 bkimminich/juice-shop:latest
 
 # ---------------------------------------------------------------------------
 log "6/7  Metasploitable ($META_NAME)"
@@ -459,7 +459,7 @@ cat > "$HOME/devsecops-lab-env.md" <<EOF
 | Cloud9 user suffix  | $YOU                                        |
 | Lab network         | $NETWORK                                    |
 | Juice Shop name     | $JUICE_NAME                                 |
-| Juice Shop URL      | http://localhost:3000                       |
+| Juice Shop URL      | http://localhost:8080                       |
 | Juice Shop net-name | juice-shop  (use from same docker network)  |
 | Metasploitable name | $META_NAME                                  |
 | Metasploitable IP   | ${META_IP}                                  |
@@ -479,7 +479,7 @@ else
 fi
 echo
 echo "Quick verify:"
-echo "  curl -sI http://localhost:3000   | head -1   # Juice Shop"
+echo "  curl -sI http://localhost:8080   | head -1   # Juice Shop"
 echo "  nmap -Pn -p 21,22,80 ${META_IP}              # Metasploitable"
 echo "  curl -sI http://localhost:8081   | head -1   # Jenkins (60-90s on first boot)"
 echo

@@ -131,7 +131,7 @@ else
 fi
 
 # Targets reachable
-check "Juice Shop responds on :3000"             10 curl -sf http://localhost:3000
+check "Juice Shop responds on :8080"             10 curl -sf http://localhost:8080
 check "Juice Shop container running"              5 docker ps --filter name=juice-shop-${YOU} --filter status=running --quiet
 check "Metasploitable container running"          5 docker ps --filter name=metasploitable-${YOU} --filter status=running --quiet
 check "devsecops-lab network exists"              5 docker network inspect devsecops-lab

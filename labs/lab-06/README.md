@@ -76,7 +76,7 @@ TARGET_IP=$(awk -F'|' '/Metasploitable IP/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); pri
 nmap -Pn -sV -sC -oN ~/environment/devsecops-work/lab5-recon.txt $TARGET_IP
 
 # For Juice Shop:
-curl -sI http://localhost:3000
+curl -sI http://localhost:8080
 ```
 
 Identify **one** version-fingerprinted service likely vulnerable. Record:
@@ -132,7 +132,7 @@ docker run --rm -it \
 Or for Juice Shop, a user enumeration:
 
 ```bash
-curl -s http://localhost:3000/api/Users | jq '.data[].email' | head
+curl -s http://localhost:8080/api/Users | jq '.data[].email' | head
 ```
 
 > ✅ **Checkpoint:** you have one concrete piece of evidence that proves the issue.
