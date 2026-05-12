@@ -321,6 +321,10 @@ services:
     user: root
     ports:
       - "8081:8080"
+    environment:
+      # Allow Jenkins Git plugin to clone from a local bind-mounted directory
+      # (default-deny since 4.x for security). Required for /var/sample-repo SCM.
+      JAVA_OPTS: "-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
@@ -395,12 +399,22 @@ fi
 # ---------------------------------------------------------------------------
 log "Jenkins"
 # ---------------------------------------------------------------------------
-# Detect config drift: if ds-jenkins exists but doesn't have the /var/sample-repo
-# bind mount, tear it down so compose recreates it correctly.
+# Detect config drift: ds-jenkins exists but is missing either the
+# /var/sample-repo bind mount OR the ALLOW_LOCAL_CHECKOUT JVM flag.
 if docker inspect ds-jenkins >/dev/null 2>&1; then
+  drift=0
   if ! docker inspect ds-jenkins \
        | jq -e '.[0].Mounts[] | select(.Destination == "/var/sample-repo")' >/dev/null 2>&1; then
-    echo "    Jenkins config drift detected (no /var/sample-repo mount) — recreating"
+    echo "    drift: no /var/sample-repo mount"
+    drift=1
+  fi
+  if ! docker inspect ds-jenkins \
+       | jq -e '.[0].Config.Env[] | select(. | contains("ALLOW_LOCAL_CHECKOUT"))' >/dev/null 2>&1; then
+    echo "    drift: ALLOW_LOCAL_CHECKOUT JVM flag not set (needed for local Git clone)"
+    drift=1
+  fi
+  if (( drift )); then
+    echo "    recreating Jenkins container"
     ( cd "$LAB9_DIR/jenkins" && docker compose down >/dev/null 2>&1 ) || true
   fi
 fi
