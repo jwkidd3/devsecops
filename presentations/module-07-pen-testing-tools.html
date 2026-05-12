@@ -237,7 +237,7 @@ msf6 exploit(ms17_010_eternalblue) &gt; run</code></pre>
                     <li class="fragment fade-up">Inspect &amp; reissue requests via Manual Request Editor / Repeater</li>
                     <li class="fragment fade-up">Export the report (HTML, JSON, SARIF)</li>
                 </ol>
-                <aside class="notes">SARIF export plugs nicely into GitHub code scanning + Azure DevOps work-item creation.</aside>
+                <aside class="notes">SARIF export plugs nicely into GitHub code scanning + GitHub Actions / GitLab CI work-item creation.</aside>
             </section>
 
             <!-- Headless usage -->
@@ -264,7 +264,7 @@ docker run --rm -t \
                 <ul>
                     <li class="fragment fade-up"><strong>Form-based:</strong> ZAP auth scripts &mdash; record-and-replay a login</li>
                     <li class="fragment fade-up"><strong>Token-based:</strong> set a session header in context</li>
-                    <li class="fragment fade-up"><strong>OAuth / Entra ID:</strong> obtain a token outside ZAP, inject as bearer</li>
+                    <li class="fragment fade-up"><strong>OAuth / IAM Identity Center:</strong> obtain a token outside ZAP, inject as bearer</li>
                     <li class="fragment fade-up"><strong>Verify auth still works</strong> mid-scan with a "logged-in" indicator</li>
                 </ul>
                 <div class="highlight-box success"><strong>Without auth, ZAP only sees the unauthenticated surface.</strong> Most app risk lives behind login.</div>

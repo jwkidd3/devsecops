@@ -43,7 +43,7 @@ Net working time: **5.5 hrs/day = 11 hrs total**.
 | 12:00 – 1:00 | **Lunch** |
 | 1:00 – 1:30 | **Lab 7** Metasploit (30) |
 | 1:30 – 2:15 | **Lab 8** ZAP baseline + full scan (45) |
-| 2:15 – 2:45 | **Module 8** *Monitoring (Azure → CloudWatch)* (30) |
+| 2:15 – 2:45 | **Module 8** *Monitoring with CloudWatch* (30) |
 | 2:45 – 3:00 | Break |
 | 3:00 – 3:30 | **Lab 9** CloudWatch detection & alarm (30) |
 | 3:30 – 4:00 | **Lab 10** capstone — Jenkins + ZAP DAST gate (30) |
@@ -100,4 +100,4 @@ Before learners sign in:
 - All labs target intentionally vulnerable applications (OWASP Juice Shop, Metasploitable) running **inside each learner's own Cloud9 instance** — they are isolated to that EC2's Docker network and unreachable from outside. Never run these tools against production systems or systems you do not own / have written permission to test.
 - Use the on-screen timer for breaks (~10 min every 75 min, lunch midday).
 - Pair learners 2-by-2 for the threat-modeling and pen-testing labs — discussion adds more than solo work.
-- Module 8 teaches Azure Monitor concepts (per outline) and Lab 9 implements them on **AWS CloudWatch** because the lab account is AWS. The deck includes a concept-mapping slide.
+- Module 8 teaches CloudWatch concepts (per outline) and Lab 9 implements them on **AWS CloudWatch** because the lab account is AWS. The deck includes a concept-mapping slide.

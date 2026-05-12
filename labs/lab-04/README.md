@@ -64,7 +64,7 @@ Logging: cloud-native monitoring; CSPM enabled.
 - The orders database holds customer name, email, postal address, and an external `customer_id` (no card data stored locally).
 - Staff admins use a separate `/admin` web app behind Conditional Access + MFA.
 
-> 💡 The brief is intentionally cloud-agnostic. Apply your own cloud's primitives (Azure Front Door + App Service, AWS CloudFront + ECS/EKS, etc.) — STRIDE works the same way.
+> 💡 The brief is intentionally cloud-agnostic. Apply your own cloud's primitives (CloudFront / ALB + App Service, AWS CloudFront + ECS/EKS, etc.) — STRIDE works the same way.
 
 ---
 

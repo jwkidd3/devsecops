@@ -55,7 +55,7 @@ EXPECTED_DECKS=(
   module-05-owasp-upstream.html
   module-06-pen-testing-fundamentals.html
   module-07-pen-testing-tools.html
-  module-08-azure-monitoring.html
+  module-08-monitoring.html
   module-09-automation-jenkins.html
 )
 

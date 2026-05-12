@@ -6,20 +6,12 @@
 
 ## Lab overview
 
-> 💡 The module taught Azure Monitor concepts. Because the lab environment is AWS Cloud9, we apply the **same ideas** with the equivalent AWS services. The mapping:
->
-> | Azure | AWS |
-> |---|---|
-> | Log Analytics workspace | CloudWatch Logs log group |
-> | KQL | Logs Insights query language |
-> | Log search alert rule | Metric filter → CloudWatch Alarm |
-> | Action group | SNS topic + subscription |
-> | Defender for Cloud (CSPM) | AWS Security Hub / GuardDuty |
+Wire up an end-to-end CloudWatch detection: push synthetic sign-in events into a log group, query them with Logs Insights, convert the pattern into a metric filter + CloudWatch Alarm, and have the alarm email you via SNS.
 
 ### Objectives
 
 - Create a CloudWatch log group and a custom log stream
-- Push synthetic sign-in events that mimic Entra/Cognito audit logs
+- Push synthetic sign-in events (simulating Cognito audit logs)
 - Author a Logs Insights query for repeated failed sign-ins
 - Convert the pattern into a metric filter + CloudWatch Alarm
 - Wire the alarm to an SNS topic that emails you
@@ -152,7 +144,7 @@ You should see 11 rows (7 + 3 + 1).
 
 ## Step 5: Author the detection query
 
-Same intent as the Azure KQL detection, in Logs Insights syntax:
+Logs Insights query — repeated failed sign-ins:
 
 ```
 fields @timestamp, @message
@@ -241,7 +233,7 @@ State should move from `INSUFFICIENT_DATA` → `OK` → `ALARM`. Allow 2–5 min
 
 In `~/environment/devsecops-work/lab9-reflection.md`, answer:
 
-1. What's the equivalent of Azure Monitor's **action group** in this lab? What did you have to set up that's free in Azure?
+1. What does the **SNS topic + subscription** give you that a single email destination wouldn't?
 2. What's a sensible threshold for *real* sign-in data — what's the false-positive cost?
 3. What other dimensions would you add (geo, ASN, app) to reduce false positives?
 4. How would you adapt this query for the **impossible-travel** scenario from the module?

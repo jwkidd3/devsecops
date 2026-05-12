@@ -224,7 +224,7 @@
                     <li class="fragment fade-up">Token never expires; logout doesn't actually invalidate</li>
                     <li class="fragment fade-up">Recovery flows that leak account existence</li>
                 </ul>
-                <div class="highlight-box success"><strong>Default to identity providers:</strong> Entra ID, Auth0, Okta, Cognito. Resist the urge to build your own login.</div>
+                <div class="highlight-box success"><strong>Default to identity providers:</strong> IAM Identity Center, Auth0, Okta, Cognito. Resist the urge to build your own login.</div>
                 <aside class="notes">If your team is still building login screens from scratch, that's a strong refactor candidate.</aside>
             </section>
 
@@ -250,7 +250,7 @@
                     <li class="fragment fade-up">Log fields swallow PII, can't be redacted later</li>
                     <li class="fragment fade-up">No alerting on auth failure spikes</li>
                 </ul>
-                <div class="highlight-box"><strong>Sets up Module 8</strong> &mdash; we'll do this properly with Azure Monitor and KQL.</div>
+                <div class="highlight-box"><strong>Sets up Module 8</strong> &mdash; we'll do this properly with CloudWatch and KQL.</div>
                 <aside class="notes">Why is logging in the Top 10? Because you can't respond to what you can't see.</aside>
             </section>
 
@@ -263,7 +263,7 @@
                 </div>
                 <ul>
                     <li class="fragment fade-up"><strong>Smell:</strong> any feature that takes a URL parameter and fetches it server-side</li>
-                    <li class="fragment fade-up"><strong>Mitigations:</strong> allow-list outbound destinations, disable redirects, use IMDSv2 in AWS / Azure metadata equivalents, network egress filtering</li>
+                    <li class="fragment fade-up"><strong>Mitigations:</strong> allow-list outbound destinations, disable redirects, use IMDSv2, network egress filtering</li>
                 </ul>
                 <aside class="notes">SSRF graduated to its own slot in 2021 thanks to cloud-attack reality. Capital One breach is the reference incident.</aside>
             </section>

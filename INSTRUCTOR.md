@@ -82,7 +82,7 @@ Learners create their own Cloud9 in Lab 1. Everything below is your job, done be
 
 ### Module 8 — Monitoring (30 min)
 
-- The **Same ideas, on AWS** mapping slide is the most important — it bridges the Azure teaching to the AWS lab.
+- The **CloudWatch family** and **Logs Insights primer** slides are the load-bearing teaching content.
 - Don't go deep on Sentinel; mention as "this is where you grow into."
 
 ### Module 9 — Automation (15 min, condensed)

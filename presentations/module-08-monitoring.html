@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring with Azure Monitor | DevSecOps</title>
+    <title>Monitoring with CloudWatch | DevSecOps</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reset.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
@@ -60,7 +60,7 @@
 
             <!-- Title -->
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="title-slide">
-                <h1>&#128201; Monitoring with Azure Monitor</h1>
+                <h1>&#128201; Monitoring with CloudWatch</h1>
                 <h2>From signal to detection &mdash; the runtime side of DevSecOps</h2>
                 <h3>DevSecOps &mdash; Module 8 of 9</h3>
                 <div class="module-progress">
@@ -73,13 +73,13 @@
             <section>
                 <h2>&#127919; Module objectives</h2>
                 <ul>
-                    <li class="fragment fade-up">Map the Azure Monitor product family</li>
+                    <li class="fragment fade-up">Map the CloudWatch product family</li>
                     <li class="fragment fade-up">Differentiate metrics, logs, traces, and activity-log data</li>
-                    <li class="fragment fade-up">Read &amp; write basic KQL against Log Analytics</li>
-                    <li class="fragment fade-up">Configure an alert rule with an action group</li>
-                    <li class="fragment fade-up">Position Defender for Cloud and Microsoft Sentinel relative to Azure Monitor</li>
+                    <li class="fragment fade-up">Read &amp; write basic Logs Insights queries against CloudWatch Logs</li>
+                    <li class="fragment fade-up">Configure an alert rule with an SNS topic</li>
+                    <li class="fragment fade-up">Position Security Hub + GuardDuty and Amazon Security Lake relative to CloudWatch</li>
                 </ul>
-                <aside class="notes">Plenty here. We'll lab the highest-leverage parts: a KQL detection query and an alert rule.</aside>
+                <aside class="notes">Plenty here. We'll lab the highest-leverage parts: a Logs Insights detection query and a CloudWatch alarm.</aside>
             </section>
 
             <!-- Why monitor -->
@@ -96,17 +96,17 @@
                 <aside class="notes">"You can't respond to what you can't see" — repeat this. Monitoring isn't a luxury; it's the only path to learning from production.</aside>
             </section>
 
-            <!-- Azure Monitor family -->
+            <!-- CloudWatch family -->
             <section>
-                <h2>&#127757; The Azure Monitor family</h2>
+                <h2>&#127757; The CloudWatch family</h2>
                 <table>
                     <tr><th>Capability</th><th>Use for</th></tr>
                     <tr><td>Metrics</td><td>Numeric, real-time, low cost (CPU, latency, request count)</td></tr>
-                    <tr><td>Logs (Log Analytics)</td><td>Structured events, queryable with KQL</td></tr>
-                    <tr><td>Application Insights</td><td>App telemetry &mdash; traces, exceptions, dependency calls</td></tr>
+                    <tr><td>Logs (CloudWatch Logs)</td><td>Structured events, queryable with Logs Insights</td></tr>
+                    <tr><td>CloudWatch Application Insights</td><td>App telemetry &mdash; traces, exceptions, dependency calls</td></tr>
                     <tr><td>Activity Log</td><td>Control-plane operations (who created/changed/deleted)</td></tr>
                     <tr><td>Diagnostic settings</td><td>Per-resource emission of platform logs into a workspace</td></tr>
-                    <tr><td>Alerts &amp; action groups</td><td>Threshold or query-based fire-and-route</td></tr>
+                    <tr><td>Alerts &amp; SNS topics</td><td>Threshold or query-based fire-and-route</td></tr>
                     <tr><td>Workbooks &amp; dashboards</td><td>Operational visualisations</td></tr>
                 </table>
                 <aside class="notes">Three things to plant: workspace, diagnostic setting, alert rule. Everything else lives on top.</aside>
@@ -132,71 +132,71 @@
                         <p><em>Best for:</em> latency root-causing.</p>
                     </div>
                 </div>
-                <div class="highlight-box"><strong>Security work lives mostly in <em>logs</em>.</strong> KQL is the language; Log Analytics is the store.</div>
+                <div class="highlight-box"><strong>Security work lives mostly in <em>logs</em>.</strong> Logs Insights is the query language; CloudWatch Logs is the store.</div>
                 <aside class="notes">For DevSecOps, metrics catch DoS-shaped issues; logs catch everything else.</aside>
             </section>
 
-            <!-- Log Analytics workspace -->
+            <!-- CloudWatch Logs log group -->
             <section>
-                <h2>&#128190; Log Analytics workspace</h2>
+                <h2>&#128190; CloudWatch Logs log group</h2>
                 <ul>
                     <li class="fragment fade-up">Central log store &mdash; per-tenant, multi-region</li>
                     <li class="fragment fade-up">Resources emit logs via <strong>diagnostic settings</strong></li>
-                    <li class="fragment fade-up">Tables: <code>SigninLogs</code>, <code>AuditLogs</code>, <code>AzureActivity</code>, <code>AppRequests</code>, <code>AppDependencies</code>, <code>AzureDiagnostics</code>&hellip;</li>
+                    <li class="fragment fade-up">Tables: <code>CloudTrail</code>, <code>CloudTrail</code>, <code>CloudTrail</code>, <code>AppRequests</code>, <code>AppDependencies</code>, <code>Logs</code>&hellip;</li>
                     <li class="fragment fade-up">Retention: 30 / 90 days default; archive up to years (cheaper)</li>
                 </ul>
                 <div class="highlight-box warning"><strong>Cost reality:</strong> ingestion is the biggest line item. Filter at source &mdash; don't ingest you-don't-need.</div>
                 <aside class="notes">Telemetry cost surprises kill monitoring programs. Start narrow.</aside>
             </section>
 
-            <!-- KQL primer -->
+            <!-- Logs Insights primer -->
             <section>
-                <h2>&#128221; KQL in 90 seconds</h2>
-                <pre><code>// All sign-ins for one user in the last day
-SigninLogs
-| where TimeGenerated &gt; ago(1d)
-| where UserPrincipalName == "alex@contoso.com"
-| project TimeGenerated, ResultDescription, IPAddress, AppDisplayName
-| order by TimeGenerated desc</code></pre>
+                <h2>&#128221; Logs Insights in 90 seconds</h2>
+                <pre><code># All console logins for one user in the last day
+fields @timestamp, eventName, sourceIPAddress, awsRegion
+| filter eventSource = "signin.amazonaws.com"
+| filter userIdentity.userName = "alex"
+| sort @timestamp desc
+| limit 50</code></pre>
                 <ul>
                     <li class="fragment fade-up"><strong>Pipe-based</strong>, like a SQL/Splunk hybrid</li>
-                    <li class="fragment fade-up">Verbs: <code>where</code>, <code>project</code>, <code>summarize</code>, <code>extend</code>, <code>join</code>, <code>render</code></li>
-                    <li class="fragment fade-up">Time helpers: <code>ago()</code>, <code>now()</code>, <code>bin()</code></li>
+                    <li class="fragment fade-up">Verbs: <code>filter</code>, <code>fields</code>, <code>stats</code>, <code>parse</code>, <code>sort</code>, <code>limit</code></li>
+                    <li class="fragment fade-up">Time helpers: relative ranges in the UI; <code>@timestamp</code> in queries</li>
                 </ul>
-                <aside class="notes">The same language is used in Sentinel, Defender XDR, and Application Insights. Worth investing in.</aside>
+                <aside class="notes">Same shape as KQL or Splunk SPL — pipe data through verbs. Worth investing in.</aside>
             </section>
 
-            <!-- Detection KQL -->
+            <!-- Detection example -->
             <section>
                 <h2>&#128270; A useful detection &mdash; impossible-travel signal</h2>
-                <pre><code>SigninLogs
-| where TimeGenerated &gt; ago(1h)
-| where ResultType == 0
-| summarize Locations = make_set(Location), IPs = make_set(IPAddress) by UserPrincipalName, bin(TimeGenerated, 10m)
-| where array_length(Locations) &gt; 1
-| project TimeGenerated, UserPrincipalName, Locations, IPs</code></pre>
-                <div class="highlight-box"><strong>What it catches:</strong> a user appearing successfully signed in from two countries within 10 minutes &mdash; almost always credential misuse.</div>
+                <pre><code>fields @timestamp, userIdentity.userName, awsRegion, sourceIPAddress
+| filter eventName = "ConsoleLogin" and responseElements.ConsoleLogin = "Success"
+| stats count_distinct(awsRegion) as regions,
+        values(awsRegion) as region_list
+        by userIdentity.userName, bin(10m)
+| filter regions &gt; 1</code></pre>
+                <div class="highlight-box"><strong>What it catches:</strong> a user successfully signing in from two regions within 10 minutes &mdash; almost always credential misuse.</div>
                 <aside class="notes">Show this query running in the lab. Tweak the bin window if false positives are too high (VPN users, etc.).</aside>
             </section>
 
             <!-- Alerts -->
             <section>
-                <h2>&#128276; Alerts &amp; action groups</h2>
+                <h2>&#128276; Alerts &amp; SNS topics</h2>
                 <div class="two-columns">
                     <div class="card">
                         <h4>Alert rule = condition + action</h4>
                         <ul>
                             <li><strong>Metric alert:</strong> threshold on a numeric series</li>
-                            <li><strong>Log alert:</strong> KQL query returns &gt; 0 results</li>
+                            <li><strong>Log alert:</strong> Logs Insights query returns &gt; 0 results</li>
                             <li><strong>Activity-log alert:</strong> control-plane event match</li>
                         </ul>
                     </div>
                     <div class="card">
-                        <h4>Action groups</h4>
+                        <h4>SNS topics</h4>
                         <ul>
                             <li>Email, SMS, voice</li>
                             <li>Webhook (Slack, Teams, PagerDuty, JIRA)</li>
-                            <li>Azure Function / Logic App / Automation runbook</li>
+                            <li>Lambda / Step Function / Systems Manager runbook</li>
                             <li>Event Hub / Event Grid</li>
                         </ul>
                     </div>
@@ -205,31 +205,31 @@ SigninLogs
                 <aside class="notes">Action-group reuse is key — define once, attach to many rules.</aside>
             </section>
 
-            <!-- Defender for Cloud -->
+            <!-- Security Hub + GuardDuty -->
             <section>
-                <h2>&#128737;&#65039; Defender for Cloud</h2>
+                <h2>&#128737;&#65039; Security Hub + GuardDuty</h2>
                 <ul>
                     <li class="fragment fade-up"><strong>CSPM:</strong> continuous posture management &mdash; surfaces misconfig recommendations</li>
                     <li class="fragment fade-up"><strong>CWPP:</strong> workload protection &mdash; threats on VMs, containers, App Service, SQL, Storage&hellip;</li>
                     <li class="fragment fade-up"><strong>Secure Score:</strong> 0&ndash;100 measure of posture for KPIs</li>
-                    <li class="fragment fade-up">Findings &amp; alerts flow into Log Analytics &amp; Sentinel</li>
+                    <li class="fragment fade-up">Findings &amp; alerts flow into Security Hub</li>
                 </ul>
-                <div class="highlight-box"><strong>Free tier</strong> gives you CSPM. Paid Defender plans add CWPP per resource type.</div>
-                <aside class="notes">Many teams enable Defender, ignore Secure Score, and miss 80% of the value. Bake the score into a quarterly review.</aside>
+                <div class="highlight-box"><strong>Free tier</strong> gives you CSPM. Paid GuardDuty plans add CWPP per resource type.</div>
+                <aside class="notes">Many teams enable Security Hub, ignore the score, and miss 80% of the value. Bake the score into a quarterly review.</aside>
             </section>
 
-            <!-- Sentinel -->
+            <!-- Security Lake -->
             <section>
-                <h2>&#127773; Microsoft Sentinel</h2>
+                <h2>&#127773; Amazon Security Lake &amp; Detective</h2>
                 <ul>
-                    <li class="fragment fade-up"><strong>SIEM + SOAR built on Log Analytics</strong> &mdash; same workspace, same KQL</li>
-                    <li class="fragment fade-up"><strong>Connectors</strong>: 100+ for Azure, AWS, GCP, on-prem, SaaS</li>
+                    <li class="fragment fade-up"><strong>Centralised security data lake — aggregates logs from many AWS accounts</strong> &mdash; queryable with Athena (SQL) or Logs Insights</li>
+                    <li class="fragment fade-up"><strong>Sources</strong>: CloudTrail, VPC Flow Logs, Route 53 DNS, Security Hub findings, partner integrations</li>
                     <li class="fragment fade-up"><strong>Analytics rules</strong>: scheduled, NRT, ML, Microsoft-managed</li>
                     <li class="fragment fade-up"><strong>Workbooks &amp; hunting</strong>: operational + threat-hunting UIs</li>
                     <li class="fragment fade-up"><strong>Playbooks</strong> via Logic Apps for automated response</li>
                 </ul>
-                <div class="highlight-box"><strong>Decision aid:</strong> Defender for Cloud finds <em>what's wrong now</em>; Sentinel detects <em>what's happening over time</em>.</div>
-                <aside class="notes">Don't pretend learners need to operate Sentinel after this course. Frame it as "this is where you'd buy in if you grow past Azure Monitor + Defender."</aside>
+                <div class="highlight-box"><strong>Decision aid:</strong> Security Hub finds <em>posture issues</em>; GuardDuty detects <em>active threats</em>; Security Lake powers <em>historical hunting</em>.</div>
+                <aside class="notes">Don't pretend learners need to operate Security Lake after this course. Frame it as "this is where you'd buy in if you grow past CloudWatch + Security Hub."</aside>
             </section>
 
             <!-- Detection use cases -->
@@ -246,29 +246,12 @@ SigninLogs
                 <aside class="notes">These six catch a surprising fraction of real incidents. Build them, tune them, then expand.</aside>
             </section>
 
-            <!-- Cross-cloud mapping for the lab -->
-            <section>
-                <h2>&#128279; Same ideas, on AWS &mdash; for the lab</h2>
-                <p>The lab environment is AWS Cloud9. The concepts above translate directly:</p>
-                <table>
-                    <tr><th>Azure</th><th>AWS equivalent</th></tr>
-                    <tr><td>Log Analytics workspace</td><td>CloudWatch Logs log group</td></tr>
-                    <tr><td>KQL</td><td>Logs Insights query language</td></tr>
-                    <tr><td>Log search alert rule</td><td>Metric filter &rarr; CloudWatch Alarm</td></tr>
-                    <tr><td>Action group</td><td>SNS topic + subscription</td></tr>
-                    <tr><td>Defender for Cloud (CSPM)</td><td>AWS Security Hub / GuardDuty</td></tr>
-                    <tr><td>Microsoft Sentinel</td><td>Amazon Security Lake + OpenSearch / 3rd-party SIEM</td></tr>
-                </table>
-                <div class="highlight-box success"><strong>The mental model is portable.</strong> Verbs change; the question "what condition + what action" stays the same.</div>
-                <aside class="notes">Spend 60 seconds here. Reassures learners that the Azure teaching content above isn't wasted &mdash; the lab will exercise the same patterns on AWS.</aside>
-            </section>
-
             <!-- Module recap -->
             <section>
                 <h2>&#9989; Module recap</h2>
-                <div class="key-point"><strong>Azure Monitor</strong> = metrics + logs + traces + alerts + action groups, centred on a Log Analytics workspace.</div>
-                <div class="key-point"><strong>KQL</strong> / <strong>Logs Insights</strong> &mdash; learn the verbs; the same shape applies in both clouds.</div>
-                <div class="key-point"><strong>Defender</strong> &amp; <strong>Sentinel</strong> on Azure / <strong>Security Hub</strong> &amp; <strong>GuardDuty</strong> on AWS &mdash; posture + detection layered on top of the same telemetry.</div>
+                <div class="key-point"><strong>CloudWatch</strong> = metrics + logs + traces + alarms + SNS, centred on Log Groups.</div>
+                <div class="key-point"><strong>Logs Insights</strong> &mdash; the pipe-based query language; learn the verbs (<code>filter</code>, <code>stats</code>, <code>parse</code>).</div>
+                <div class="key-point"><strong>Security Hub</strong> = posture; <strong>GuardDuty</strong> = active-threat detection; <strong>Security Lake</strong> = historical hunting. Layered on the same telemetry.</div>
                 <aside class="notes">Lab 9 next: write a Logs Insights detection &amp; wire it to a CloudWatch Alarm + SNS email.</aside>
             </section>
 

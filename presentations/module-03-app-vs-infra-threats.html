@@ -66,7 +66,7 @@
                 <div class="module-progress">
                     <div class="step completed"></div><div class="step completed"></div><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div>
                 </div>
-                <aside class="notes">Module purpose: clarify which layer owns which risk so the right team gets the right finding. The cloud half is Azure-flavoured per the course outline.</aside>
+                <aside class="notes">Module purpose: clarify which layer owns which risk so the right team gets the right finding. The cloud half uses AWS terminology.</aside>
             </section>
 
             <!-- Objectives -->
@@ -74,8 +74,8 @@
                 <h2>&#127919; Module objectives</h2>
                 <ul>
                     <li class="fragment fade-up">Differentiate application-layer threats from infrastructure-layer threats</li>
-                    <li class="fragment fade-up">Map the shared-responsibility model to Azure services (IaaS, PaaS, SaaS)</li>
-                    <li class="fragment fade-up">Identify Azure-specific threat classes &mdash; identity, network, storage, key management</li>
+                    <li class="fragment fade-up">Map the shared-responsibility model to AWS services (IaaS, PaaS, SaaS)</li>
+                    <li class="fragment fade-up">Identify AWS-specific threat classes &mdash; identity, network, storage, key management</li>
                     <li class="fragment fade-up">Decide where a control belongs: code, platform, or policy</li>
                 </ul>
                 <aside class="notes">Tell learners there's no lab callout in this module — it feeds directly into module 4 (threat maps), which has the lab.</aside>
@@ -134,11 +134,15 @@
             <section>
                 <h2>&#127959;&#65039; Anatomy of an infrastructure threat</h2>
                 <div class="concept-box">
-                    <h3>Storage account left public &mdash; no app bug needed</h3>
-                    <pre><code class="language-hcl">resource "azurerm_storage_account" "data" {
-  name                          = "prodbucket"
-  public_network_access_enabled = true   # &larr; the bug
-  allow_nested_items_to_be_public = true
+                    <h3>S3 bucket left public &mdash; no app bug needed</h3>
+                    <pre><code class="language-hcl">resource "aws_s3_bucket" "data" { bucket = "prod-data" }
+
+resource "aws_s3_bucket_public_access_block" "data" {
+  bucket                  = aws_s3_bucket.data.id
+  block_public_acls       = false   # &larr; the bug
+  block_public_policy     = false   # &larr; the bug
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }</code></pre>
                 </div>
                 <ul>
@@ -151,17 +155,17 @@
 
             <!-- Shared responsibility -->
             <section>
-                <h2>&#129309; Shared-responsibility model (Azure)</h2>
+                <h2>&#129309; Shared-responsibility model (AWS)</h2>
                 <table>
                     <tr><th>Layer</th><th>On-prem</th><th>IaaS (VM)</th><th>PaaS (App Svc)</th><th>SaaS</th></tr>
                     <tr><td>Data &amp; identity</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
-                    <tr><td>Application</td><td>You</td><td>You</td><td>You</td><td>Azure</td></tr>
-                    <tr><td>OS &amp; runtime</td><td>You</td><td>You</td><td>Azure</td><td>Azure</td></tr>
-                    <tr><td>Network controls</td><td>You</td><td>Shared</td><td>Shared</td><td>Azure</td></tr>
-                    <tr><td>Host &amp; physical</td><td>You</td><td>Azure</td><td>Azure</td><td>Azure</td></tr>
+                    <tr><td>Application</td><td>You</td><td>You</td><td>You</td><td>AWS</td></tr>
+                    <tr><td>OS &amp; runtime</td><td>You</td><td>You</td><td>AWS</td><td>AWS</td></tr>
+                    <tr><td>Network controls</td><td>You</td><td>Shared</td><td>Shared</td><td>AWS</td></tr>
+                    <tr><td>Host &amp; physical</td><td>You</td><td>AWS</td><td>AWS</td><td>AWS</td></tr>
                 </table>
                 <div class="highlight-box warning"><strong>Constant across every column:</strong> identity and data are <em>always</em> your responsibility.</div>
-                <aside class="notes">Microsoft's official model. The single biggest cloud failure mode is assuming Azure handles a layer it doesn't.</aside>
+                <aside class="notes">AWS's published model. The single biggest cloud failure mode is assuming AWS handles a layer it doesn't.</aside>
             </section>
 
             <!-- Cloud implications -->
@@ -177,39 +181,39 @@
                 <aside class="notes">Pause on identity. Most cloud incidents start with credential or token compromise (Verizon DBIR consistently flags this).</aside>
             </section>
 
-            <!-- Azure-specific threats -->
+            <!-- AWS-specific threats -->
             <section>
-                <h2>&#127760; Azure-specific threat classes</h2>
+                <h2>&#127760; AWS-specific threat classes</h2>
                 <div class="three-columns">
                     <div class="card">
-                        <h4>Identity (Entra ID)</h4>
+                        <h4>Identity (IAM)</h4>
                         <ul>
-                            <li>Consent phishing</li>
-                            <li>Over-privileged service principals</li>
-                            <li>Stale guest users</li>
-                            <li>No conditional access</li>
+                            <li>Over-privileged roles &amp; users</li>
+                            <li>Long-lived access keys</li>
+                            <li>Wildcards in policies (<code>Action: *</code>)</li>
+                            <li>No MFA on root / privileged users</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>Network</h4>
                         <ul>
-                            <li>NSG rules <code>0.0.0.0/0</code></li>
+                            <li>Security group rules <code>0.0.0.0/0</code></li>
                             <li>Public IP on app tier</li>
-                            <li>Missing private endpoints</li>
-                            <li>Bastion-less SSH/RDP</li>
+                            <li>Missing VPC endpoints</li>
+                            <li>SSH/RDP without Session Manager / bastion</li>
                         </ul>
                     </div>
                     <div class="card">
                         <h4>Data &amp; secrets</h4>
                         <ul>
-                            <li>Public storage containers</li>
-                            <li>Plaintext SAS tokens</li>
-                            <li>Secrets in App Settings instead of Key Vault</li>
-                            <li>Disabled diagnostics &amp; logging</li>
+                            <li>Public S3 buckets / pre-signed URL leaks</li>
+                            <li>Plaintext credentials in env vars or AMI</li>
+                            <li>Secrets in code/Lambda instead of Secrets Manager</li>
+                            <li>Disabled CloudTrail / S3 access logs</li>
                         </ul>
                     </div>
                 </div>
-                <aside class="notes">These map to Microsoft Defender for Cloud's recommendation categories. Helpful for learners who'll see Defender output later.</aside>
+                <aside class="notes">These map to AWS Security Hub's recommendation categories. Helpful context for learners who'll see Security Hub findings later.</aside>
             </section>
 
             <!-- Identity deep dive -->
@@ -224,7 +228,7 @@
                     </ul>
                 </div>
                 <div class="highlight-box success"><strong>Default rule:</strong> if an action can be done with a managed identity, it should never be done with a stored credential.</div>
-                <aside class="notes">Plug Azure Key Vault here — we'll see it again in module 8 (Azure Monitor).</aside>
+                <aside class="notes">Plug AWS Secrets Manager here — we'll see it again in Module 8 (CloudWatch).</aside>
             </section>
 
             <!-- Where does the control live -->
@@ -233,7 +237,7 @@
                 <table>
                     <tr><th>Threat</th><th>Best layer</th><th>Why</th></tr>
                     <tr><td>SQL injection</td><td>Application</td><td>Only the code can parameterise queries</td></tr>
-                    <tr><td>Public storage account</td><td>Platform / policy</td><td>Catch at IaC review or Azure Policy &mdash; never reaches prod</td></tr>
+                    <tr><td>Public storage account</td><td>Platform / policy</td><td>Catch at IaC review or AWS Config &mdash; never reaches prod</td></tr>
                     <tr><td>Stolen session token</td><td>Both</td><td>Short TTL + binding (app); detection (platform)</td></tr>
                     <tr><td>Dependency CVE</td><td>Build pipeline</td><td>SCA blocks vulnerable versions before merge</td></tr>
                     <tr><td>Insider data exfil</td><td>Runtime / policy</td><td>DLP, audit logs, anomaly detection</td></tr>
@@ -269,7 +273,7 @@
             <!-- Questions -->
             <section data-background="linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%)" class="questions-slide" style="text-align: center;">
                 <h2>&#10067; Questions &amp; discussion</h2>
-                <p>Pick one Azure threat &mdash; which team in your org owns it today?</p>
+                <p>Pick one AWS threat &mdash; which team in your org owns it today?</p>
                 <aside class="notes">Use the answers to bridge into module 4. Often the answer is "no one knows" — exactly the gap threat maps fix.</aside>
             </section>
 
