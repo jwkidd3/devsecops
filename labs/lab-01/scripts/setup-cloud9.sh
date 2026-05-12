@@ -325,6 +325,11 @@ services:
       # Allow Jenkins Git plugin to clone from a local bind-mounted directory
       # (default-deny since 4.x for security). Required for /var/sample-repo SCM.
       JAVA_OPTS: "-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true"
+      # Tell git the bind-mounted sample-repo is safe regardless of which user
+      # invokes git. GIT_CONFIG_* env vars apply to every git process.
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: "safe.directory"
+      GIT_CONFIG_VALUE_0: "*"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
@@ -413,6 +418,11 @@ if docker inspect ds-jenkins >/dev/null 2>&1; then
     echo "    drift: ALLOW_LOCAL_CHECKOUT JVM flag not set (needed for local Git clone)"
     drift=1
   fi
+  if ! docker inspect ds-jenkins \
+       | jq -e '.[0].Config.Env[] | select(. | contains("GIT_CONFIG_COUNT"))' >/dev/null 2>&1; then
+    echo "    drift: GIT_CONFIG_COUNT env not set (needed for git safe.directory)"
+    drift=1
+  fi
   if (( drift )); then
     echo "    recreating Jenkins container"
     ( cd "$LAB9_DIR/jenkins" && docker compose down >/dev/null 2>&1 ) || true
@@ -453,22 +463,18 @@ elif docker ps --filter name=^ds-jenkins$ --filter status=running --quiet | grep
   fi
 fi
 
-# Tell git inside Jenkins that the bind-mounted sample-repo is safe to use,
-# even though its owner uid (host's ec2-user) doesn't match the container's
-# root uid. Without this, git 2.35.2+ refuses with "dubious ownership".
+# Tell git inside Jenkins that the bind-mounted sample-repo is safe to use.
+# Set in BOTH /etc/gitconfig (system) and /root/.gitconfig (global) and use
+# the '*' wildcard so it covers /var/sample-repo, /var/sample-repo/.git, and
+# any subpath. The GIT_CONFIG_* env vars in the compose file are a third
+# layer that applies regardless of which user invokes git.
 if docker ps --filter name=^ds-jenkins$ --filter status=running --quiet | grep -q .; then
-  if docker exec -u root ds-jenkins \
-       git config --system --get-all safe.directory 2>/dev/null \
-       | grep -q '/var/sample-repo'; then
-    skip "git safe.directory already set inside Jenkins"
-  else
-    if docker exec -u root ds-jenkins \
-         git config --system --add safe.directory /var/sample-repo >/dev/null 2>&1; then
-      ok "git safe.directory configured inside Jenkins"
-    else
-      warn "could not set safe.directory inside Jenkins (Lab 10 checkout will fail)"
-    fi
-  fi
+  docker exec -u root ds-jenkins bash -c '
+    git config --system --add safe.directory "*"  2>/dev/null
+    git config --global --add safe.directory "*"  2>/dev/null
+  ' >/dev/null 2>&1 \
+    && ok "git safe.directory='*' configured inside Jenkins" \
+    || warn "could not set safe.directory inside Jenkins"
 fi
 
 # ---------------------------------------------------------------------------
