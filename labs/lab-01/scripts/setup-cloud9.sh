@@ -453,6 +453,24 @@ elif docker ps --filter name=^ds-jenkins$ --filter status=running --quiet | grep
   fi
 fi
 
+# Tell git inside Jenkins that the bind-mounted sample-repo is safe to use,
+# even though its owner uid (host's ec2-user) doesn't match the container's
+# root uid. Without this, git 2.35.2+ refuses with "dubious ownership".
+if docker ps --filter name=^ds-jenkins$ --filter status=running --quiet | grep -q .; then
+  if docker exec -u root ds-jenkins \
+       git config --system --get-all safe.directory 2>/dev/null \
+       | grep -q '/var/sample-repo'; then
+    skip "git safe.directory already set inside Jenkins"
+  else
+    if docker exec -u root ds-jenkins \
+         git config --system --add safe.directory /var/sample-repo >/dev/null 2>&1; then
+      ok "git safe.directory configured inside Jenkins"
+    else
+      warn "could not set safe.directory inside Jenkins (Lab 10 checkout will fail)"
+    fi
+  fi
+fi
+
 # ---------------------------------------------------------------------------
 log "Verification & environment notes"
 # ---------------------------------------------------------------------------
