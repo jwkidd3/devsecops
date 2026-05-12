@@ -61,7 +61,7 @@ Pair, then choose **one** target and **one** objective. Examples:
 | Juice Shop | Enumerate all admin emails via the user API |
 | Juice Shop | Demonstrate price tampering on a basket |
 
-Write your choice in `~/environment/devsecops-work/lab5-plan.md`.
+Write your choice in `~/environment/devsecops-work/lab6-plan.md`.
 
 ---
 
@@ -73,7 +73,7 @@ Re-use Lab 2 outputs if you have them. Otherwise, from the Cloud9 terminal:
 TARGET_IP=$(awk -F'|' '/Metasploitable IP/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}' ~/devsecops-lab-env.md)
 
 # Service & version sweep
-nmap -Pn -sV -sC -p 21,22,23,25,80,139,445,3306,5900 -oN ~/environment/devsecops-work/lab5-recon.txt $TARGET_IP
+nmap -Pn -sV -sC -p 21,22,23,25,80,139,445,3306,5900 -oN ~/environment/devsecops-work/lab6-recon.txt $TARGET_IP
 
 # For Juice Shop:
 curl -sI http://localhost:8080
@@ -155,7 +155,7 @@ This is the most important habit of a professional pen tester.
 
 ## Step 6: Write a one-page finding (10 min)
 
-Save `~/environment/devsecops-work/lab5-finding.md`:
+Save `~/environment/devsecops-work/lab6-finding.md`:
 
 ```markdown
 # Finding — <short title>

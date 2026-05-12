@@ -35,13 +35,13 @@ docker run --rm -t \
   ghcr.io/zaproxy/zaproxy:stable \
   zap-baseline.py \
     -t http://juice-shop:3000 \
-    -r lab7-baseline.html \
-    -J lab7-baseline.json \
+    -r lab8-baseline.html \
+    -J lab8-baseline.json \
     -I
 ```
 
 - `-I` keeps the exit code 0 even if warnings are present (we'll gate on this in Lab 10).
-- The report lands in `~/environment/devsecops-work/zap/lab7-baseline.html`.
+- The report lands in `~/environment/devsecops-work/zap/lab8-baseline.html`.
 
 > ✅ **Checkpoint:** the command exits with **PASS** / **FAIL** summary and produces both `.html` and `.json` files.
 
@@ -62,20 +62,20 @@ docker run --rm -t \
 
 ## Step 3: Triage the report
 
-Open `lab7-baseline.html` via Cloud9 (right-click → **Open**), or summarise with jq:
+Open `lab8-baseline.html` via Cloud9 (right-click → **Open**), or summarise with jq:
 
 ```bash
 # Top alert categories sorted by count
 jq -r '.site[].alerts[] | "\(.riskdesc)\t\(.name)"' \
-  ~/environment/devsecops-work/zap/lab7-baseline.json \
+  ~/environment/devsecops-work/zap/lab8-baseline.json \
   | sort | uniq -c | sort -rn
 
 # High-severity only (the same one-liner Lab 10's gate uses)
 jq '.site[].alerts[] | select(.riskcode | tonumber >= 3) | {risk: .riskdesc, name: .name}' \
-  ~/environment/devsecops-work/zap/lab7-baseline.json
+  ~/environment/devsecops-work/zap/lab8-baseline.json
 ```
 
-In `~/environment/devsecops-work/zap/lab7-triage.md`, answer:
+In `~/environment/devsecops-work/zap/lab8-triage.md`, answer:
 
 1. How many **Medium**+**High** findings did the baseline report?
 2. Which OWASP Top 10 category does each Medium+ map to?
@@ -95,8 +95,8 @@ docker run --rm -t \
   ghcr.io/zaproxy/zaproxy:stable \
   zap-full-scan.py \
     -t http://juice-shop:3000 \
-    -r lab7-full.html \
-    -J lab7-full.json \
+    -r lab8-full.html \
+    -J lab8-full.json \
     -I -T 8
 ```
 
@@ -106,8 +106,8 @@ Compare the two reports:
 
 ```bash
 jq '[.site[].alerts[] | select(.riskcode | tonumber >= 3)] | length' \
-   ~/environment/devsecops-work/zap/lab7-baseline.json \
-   ~/environment/devsecops-work/zap/lab7-full.json
+   ~/environment/devsecops-work/zap/lab8-baseline.json \
+   ~/environment/devsecops-work/zap/lab8-full.json
 ```
 
 Expect the full-scan count to be higher. This is the same one-liner Lab 10's pipeline gate uses.

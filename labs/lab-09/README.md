@@ -239,7 +239,7 @@ State should move from `INSUFFICIENT_DATA` → `OK` → `ALARM`. Allow 2–5 min
 
 ## Step 8: Reflect
 
-In `~/environment/devsecops-work/lab8-reflection.md`, answer:
+In `~/environment/devsecops-work/lab9-reflection.md`, answer:
 
 1. What's the equivalent of Azure Monitor's **action group** in this lab? What did you have to set up that's free in Azure?
 2. What's a sensible threshold for *real* sign-in data — what's the false-positive cost?

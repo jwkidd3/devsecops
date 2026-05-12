@@ -136,7 +136,7 @@ Back in Jenkins → **Build Now** again.
 
 ## Step 6: Reflect (3 min)
 
-In `~/environment/devsecops-work/lab9-reflection.md`, jot answers to:
+In `~/environment/devsecops-work/lab10-reflection.md`, jot answers to:
 
 1. What's the difference between **silencing** the gate and **escaping** it? Which did you do?
 2. If this were a real product, who needs to sign off on the `ALLOWED_HIGH` threshold — and how often do they revisit it?

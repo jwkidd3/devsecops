@@ -47,22 +47,21 @@ Useful first commands:
 ```text
 msf6 > version            # confirm install
 msf6 > help               # cheat-sheet
-msf6 > workspace -a lab6  # tidy workspace
 ```
+
+> 💡 The container doesn't run a database, so `db_nmap`, `workspace`, `hosts`, `services` will report **"Database not connected"**. We don't need them — the exploit works with just a target hostname.
 
 ---
 
-## Step 2: Resolve & verify the target
+## Step 2: Verify the target is reachable
 
-The target's network alias is `metasploitable` (set by the Lab 1 setup script):
+The target's network alias is `metasploitable` (set by the Lab 1 setup script). The container is on the same Docker network, so the name resolves:
 
 ```text
-msf6 > db_nmap -Pn -sV -p 21,22,80,139,445 metasploitable
-msf6 > hosts
-msf6 > services
+msf6 > ping -c 1 metasploitable
 ```
 
-Services should populate.
+You should see `1 packets transmitted, 1 received`.
 
 ---
 
@@ -115,7 +114,7 @@ ls -la /root
 
 Don't read sensitive files; this is a lab, but practise the habit.
 
-Capture by selecting → copying terminal output, paste into `~/environment/devsecops-work/lab6-evidence.txt`.
+Capture by selecting → copying terminal output, paste into `~/environment/devsecops-work/lab7-evidence.txt`.
 
 ---
 
@@ -148,9 +147,9 @@ msf6 post(local_exploit_suggester) > run
 
 ---
 
-## Step 8: Lab-6 report
+## Step 8: Lab-7 report
 
-Save `~/environment/devsecops-work/lab6-report.md`:
+Save `~/environment/devsecops-work/lab7-report.md`:
 
 ```markdown
 # Lab 7 — Metasploit basics
