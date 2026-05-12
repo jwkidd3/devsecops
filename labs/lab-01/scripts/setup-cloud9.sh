@@ -256,6 +256,19 @@ free_port_if_held_by_stale() {
 # ---------------------------------------------------------------------------
 log "5/7  Juice Shop ($JUICE_NAME)"
 # ---------------------------------------------------------------------------
+# Detect port drift: an older setup ran with -p 3000:3000 (no Cloud9 preview).
+# If the existing container's host port isn't 8080, force recreate.
+if docker inspect "$JUICE_NAME" >/dev/null 2>&1; then
+  cur_port=$(docker inspect "$JUICE_NAME" \
+             --format '{{(index (index .NetworkSettings.Ports "3000/tcp") 0).HostPort}}' 2>/dev/null)
+  if [[ "$cur_port" != "8080" ]]; then
+    echo "    drift: Juice Shop on host port '$cur_port' — recreating on 8080"
+    docker rm -f "$JUICE_NAME" >/dev/null 2>&1 || true
+  fi
+fi
+
+# Also free port 8080 if any non-our container is holding it on the host
+free_port_if_held_by_stale 8080 "juice-shop-" "$JUICE_NAME"
 free_port_if_held_by_stale 3000 "juice-shop-" "$JUICE_NAME"
 ensure_running "$JUICE_NAME" docker run -d --name "$JUICE_NAME" --network "$NETWORK" --network-alias juice-shop -p 8080:3000 bkimminich/juice-shop:latest
 
